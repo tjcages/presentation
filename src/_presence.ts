@@ -36,7 +36,16 @@ export interface Presence<T> {
 
 interface PresenceStore<T> {
   key: string;
-  entries: PresenceEntry<T>[];
+  /**
+   * Only the levels on their way out.
+   *
+   * The live level is deliberately *not* held here. Storing it meant comparing
+   * the incoming value against the stored one and calling `setState` whenever
+   * they differed — which never converges for a caller that builds its content
+   * inline, because every render produces a fresh element. Reading the live
+   * value straight from the argument makes that whole class of loop impossible.
+   */
+  exiting: PresenceEntry<T>[];
 }
 
 /**
@@ -50,45 +59,43 @@ interface PresenceStore<T> {
 export function usePresence<T>(key: string, value: T): Presence<T> {
   const [store, setStore] = React.useState<PresenceStore<T>>(() => ({
     key,
-    entries: [{ key, value, state: "enter" }],
+    exiting: [],
   }));
 
-  let entries = store.entries;
+  // The value as of the *previous* completed render. On the render where the
+  // key changes this still holds the outgoing level's content, which is
+  // exactly what has to be frozen — the argument has already moved on.
+  const previous = React.useRef(value);
+  React.useEffect(() => {
+    previous.current = value;
+  });
+
+  let exiting = store.exiting;
 
   if (key !== store.key) {
-    entries = [
-      // Anything still on screen is now leaving. A key we are returning *to*
-      // is pulled out of the exiting set and revived below, so a fast
-      // back-back-forward never ends up with the same key twice.
-      ...store.entries
-        .filter((entry) => entry.key !== key)
-        .map((entry) =>
-          entry.state === "exit" ? entry : { ...entry, state: "exit" as const },
-        ),
-      { key, value, state: "enter" as const },
-    ];
-    setStore({ key, entries });
-  } else {
-    // Same key, new content (a revalidation, a streamed-in segment). Only the
-    // live entry follows along — exiting ones stay frozen on purpose.
-    const current = store.entries[store.entries.length - 1];
-    if (current && current.value !== value) {
-      entries = [
-        ...store.entries.slice(0, -1),
-        { ...current, value, state: "enter" as const },
-      ];
-      setStore({ key, entries });
-    }
+    exiting = [
+      // A key we are returning *to* is pulled out of the exiting set and
+      // revived as the live entry below, so a fast back-forward never ends up
+      // showing the same key twice.
+      ...store.exiting.filter((entry) => entry.key !== key),
+      { key: store.key, value: previous.current, state: "exit" as const },
+    ].filter((entry) => entry.key !== key);
+    setStore({ key, exiting });
   }
 
   const release = React.useCallback((released: string) => {
     setStore((prev) => {
       // Never release the live entry, however late the animation event lands.
       if (released === prev.key) return prev;
-      const next = prev.entries.filter((entry) => entry.key !== released);
-      return next.length === prev.entries.length ? prev : { ...prev, entries: next };
+      const next = prev.exiting.filter((entry) => entry.key !== released);
+      return next.length === prev.exiting.length ? prev : { ...prev, exiting: next };
     });
   }, []);
+
+  const entries: PresenceEntry<T>[] = [
+    ...exiting,
+    { key, value, state: "enter" },
+  ];
 
   return { entries, release };
 }

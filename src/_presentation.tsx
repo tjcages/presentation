@@ -49,6 +49,21 @@ export interface PresentationProps {
   renderBar?: (entry: StackEntry, helpers: { back: () => void }) => React.ReactNode;
   /** Suppress the built-in bar without replacing it — for a host with its own chrome. */
   bar?: boolean;
+  /**
+   * Content for the list rail, per level.
+   *
+   * Supplying this turns on the two-rail presentation: the rail and the
+   * content pane move together on every push, which is what "synced rails"
+   * means and what a static sidebar beside an animating pane does not do.
+   *
+   * The rail is keyed by *depth*, not by path, so swapping between siblings at
+   * the same depth leaves the list alone and only moves the highlight inside
+   * it — re-animating a list you are still standing in reads as a glitch.
+   *
+   * Rendered at every breakpoint so the tree does not change shape; CSS shows
+   * it only where the resolved presentation is `rails`.
+   */
+  rail?: (entry: StackEntry) => React.ReactNode;
   /** Left-edge swipe to go back. @default true */
   swipe?: boolean;
   /** Restore each level's scroll position when it is returned to. @default true */
@@ -68,6 +83,7 @@ export function Presentation({
   Link,
   renderBar,
   bar = true,
+  rail,
   swipe = true,
   restoreScroll = true,
   className,
@@ -86,6 +102,13 @@ export function Presentation({
 
   const { entries, release } = usePresence(path, children);
   const recall = useLevelMemory(depth, children);
+
+  // The rail is its own presence, keyed by depth rather than path: siblings at
+  // one depth share a list, and re-animating a list you are still standing in
+  // reads as a glitch. The pane keeps its path key, so it does move on a
+  // sibling swap — the content genuinely changed.
+  const railNode = rail && entry ? rail(entry) : null;
+  const railPresence = usePresence(`depth-${depth}`, railNode);
 
   const stackRef = React.useRef<HTMLDivElement>(null);
   const parentPath = entry?.parent?.path;
@@ -136,6 +159,31 @@ export function Presentation({
           } as React.CSSProperties
         }
       >
+        {rail ? (
+          <div className="pr-rail">
+            {railPresence.entries.map((item) => (
+              <Level
+                key={item.key}
+                state={item.state}
+                direction={direction}
+                depth={depth}
+                onSettled={
+                  item.state === "exit"
+                    ? () => railPresence.release(item.key)
+                    : undefined
+                }
+              >
+                {item.state === "exit" ? (
+                  <ExitBoundary>{item.value}</ExitBoundary>
+                ) : (
+                  item.value
+                )}
+              </Level>
+            ))}
+          </div>
+        ) : null}
+
+        <div className="pr-pane">
         {beneath !== undefined ? (
           <div className="pr-level" data-role="beneath" aria-hidden="true">
             <ExitBoundary>{beneath}</ExitBoundary>
@@ -172,6 +220,7 @@ export function Presentation({
             </Level>
           );
         })}
+        </div>
       </div>
     </PresentationProvider>
   );

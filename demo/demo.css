@@ -163,73 +163,70 @@ h2 { font-size: 20px; margin: 8px 0 4px; font-weight: 500; }
   font-size: 13px;
 }
 
-/* ── Shell: a list rail beside the content pane, desktop only ───────────── */
+/* ── Rail ───────────────────────────────────────────────────────────────── */
 
-.shell {
+/* Layout and motion belong to the package; this is only what it looks like. */
+.pr-stack {
+  --pr-rail-width: 232px;
+  --pr-rail-gap: 32px;
+  --pr-rail-top: 53px;
+}
+
+.pr-rail {
+  padding: 16px 8px 16px 12px;
+}
+
+.rail-group {
   display: flex;
-  align-items: flex-start;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 10px;
 }
 
-.pane {
-  flex: 1;
-  min-width: 0;
+.rail-title,
+.rail-item,
+.rail-back {
+  display: block;
+  padding: 7px 10px;
+  border-radius: 8px;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 13px;
 }
 
-/*
- * The rail is hidden on a phone: there the stack IS the navigation, and the
- * root level shows the same list. Above `md` the rail takes over and the
- * content pane stops being a full-page push (see the `rails` preset).
- */
-.rail {
-  display: none;
+.rail-title {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--fg);
+}
+
+.rail-back {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.rail-item:hover,
+.rail-back:hover {
+  background: var(--raised);
+}
+
+.rail-item.is-active {
+  background: var(--raised);
+  color: var(--fg);
+  font-weight: 500;
 }
 
 @media (min-width: 768px) {
-  .rail {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    position: sticky;
-    top: 37px;
-    flex: none;
-    width: 232px;
-    padding: 16px 8px;
-    border-right: 1px solid var(--line);
-    min-height: calc(100dvh - 37px);
-  }
-
-  .rail-group {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    margin-top: 12px;
-  }
-
-  .rail-item {
-    padding: 7px 10px;
-    border-radius: 8px;
-    color: var(--muted);
-    text-decoration: none;
-    font-size: 13px;
-  }
-
-  .rail-item:hover {
-    background: var(--raised);
-  }
-
-  .rail-item.is-active {
-    background: var(--raised);
-    color: var(--fg);
-    font-weight: 500;
-  }
-
-  /* The mobile nav bar is redundant once the rail is showing the same levels. */
+  /* The rail shows the same levels, so the mobile bar would duplicate it. */
   .pr-bar {
     display: none;
   }
 
   .page {
-    padding: 24px 28px 64px;
+    padding: 24px 8px 64px;
     max-width: 860px;
   }
 }

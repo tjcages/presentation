@@ -149,7 +149,11 @@
 .pr-level[data-direction="forward"][data-state="enter"],
 .pr-level[data-direction="back"][data-state="exit"] {
   --pr-shift: var(--pr-in);
-  --pr-opacity: 1;
+  /*
+   * The leading side is solid in a push — the arriving page covers the one
+   * behind it. Rails instead crossfade both halves, so they set this to 0.
+   */
+  --pr-opacity: var(--pr-lead, 1);
 }
 
 .pr-level[data-direction="forward"][data-state="exit"],
@@ -240,12 +244,15 @@
   --pr-in: 10%;
   --pr-out: 10%;
   --pr-dim: 0;
+  --pr-lead: 0;
   --pr-axis-x: 1;
   --pr-axis-y: 0;
   --pr-duration: 240ms;
   --pr-ease: cubic-bezier(0.32, 0.72, 0, 1);
   /* Both rails stay put; a cast edge between them would be a seam. */
   --pr-shadow: none;
+  /* Rails sit on the page surface, not on their own sheet. */
+  --pr-surface: transparent;
 }
 
 /* drawer — a single view rising from the bottom edge. */
@@ -280,6 +287,56 @@
   --pr-duration: 1ms;
 }
 
+
+/* ── Rails layout ───────────────────────────────────────────────────────── */
+
+/*
+ * The rail is in the tree at every width and hidden where the resolved
+ * presentation is not `rails`, so the markup never changes shape across a
+ * breakpoint. Both regions are positioned so their exiting level — which is
+ * `position: absolute` — is contained by its own half rather than by the page.
+ */
+.pr-rail {
+  display: none;
+  position: relative;
+}
+
+.pr-pane {
+  position: relative;
+  min-width: 0;
+}
+
+.pr-stack[data-present="rails"] {
+  display: flex;
+  gap: var(--pr-rail-gap, 3rem);
+}
+
+.pr-stack[data-present="rails"] > .pr-rail {
+  display: block;
+  flex: none;
+  width: var(--pr-rail-width, 15rem);
+  align-self: flex-start;
+  position: sticky;
+  top: var(--pr-rail-top, 0px);
+}
+
+.pr-stack[data-present="rails"] > .pr-pane {
+  flex: 1;
+}
+
+/* The list rail travels further than the detail; admin-kit's 25% / 10%. */
+.pr-stack[data-present="rails"] .pr-rail > .pr-level {
+  --pr-in: 25%;
+  --pr-out: 25%;
+  --pr-duration: 260ms;
+}
+
+.pr-stack[data-present="rails"] .pr-pane > .pr-level {
+  --pr-in: 10%;
+  --pr-out: 10%;
+  --pr-duration: 240ms;
+}
+
 /* ── Breakpoints ────────────────────────────────────────────────────────── */
 
 /*
@@ -289,26 +346,119 @@
  */
 @media (min-width: 640px) {
   .pr-stack[data-present-sm="push"] { --pr-in: 100%; --pr-out: 32%; --pr-dim: 0.6; --pr-axis-x: 1; --pr-axis-y: 0; --pr-duration: var(--pr-push-duration, 392ms); --pr-ease: var(--pr-push-ease, var(--pr-ease-push-fallback)); }
-  .pr-stack[data-present-sm="rails"] { --pr-in: 10%; --pr-out: 10%; --pr-dim: 0; --pr-axis-x: 1; --pr-axis-y: 0; --pr-duration: 240ms; --pr-ease: cubic-bezier(0.32, 0.72, 0, 1); --pr-shadow: none; }
+  .pr-stack[data-present-sm="rails"] { --pr-in: 10%; --pr-out: 10%; --pr-dim: 0; --pr-lead: 0; --pr-surface: transparent; --pr-axis-x: 1; --pr-axis-y: 0; --pr-duration: 240ms; --pr-ease: cubic-bezier(0.32, 0.72, 0, 1); --pr-shadow: none; }
   .pr-stack[data-present-sm="drawer"] { --pr-in: 100%; --pr-out: 0%; --pr-dim: 1; --pr-axis-x: 0; --pr-axis-y: 1; }
   .pr-stack[data-present-sm="fade"] { --pr-in: 0%; --pr-out: 0%; --pr-dim: 0; --pr-axis-x: 0; --pr-axis-y: 0; --pr-duration: var(--pr-fade-duration); --pr-ease: var(--pr-fade-ease); }
   .pr-stack[data-present-sm="none"] { --pr-in: 0%; --pr-out: 0%; --pr-dim: 1; --pr-axis-x: 0; --pr-axis-y: 0; --pr-duration: 1ms; }
+
+  .pr-stack[data-present-sm="rails"] {
+    display: flex;
+    gap: var(--pr-rail-gap, 3rem);
+  }
+
+  .pr-stack[data-present-sm="rails"] > .pr-rail {
+    display: block;
+    flex: none;
+    width: var(--pr-rail-width, 15rem);
+    align-self: flex-start;
+    position: sticky;
+    top: var(--pr-rail-top, 0px);
+  }
+
+  .pr-stack[data-present-sm="rails"] > .pr-pane {
+    flex: 1;
+  }
+
+  /* The list rail travels further than the detail; admin-kit's 25% / 10%. */
+  .pr-stack[data-present-sm="rails"] .pr-rail > .pr-level {
+    --pr-in: 25%;
+    --pr-out: 25%;
+    --pr-duration: 260ms;
+  }
+
+  .pr-stack[data-present-sm="rails"] .pr-pane > .pr-level {
+    --pr-in: 10%;
+    --pr-out: 10%;
+    --pr-duration: 240ms;
+  }
 }
 
 @media (min-width: 768px) {
   .pr-stack[data-present-md="push"] { --pr-in: 100%; --pr-out: 32%; --pr-dim: 0.6; --pr-axis-x: 1; --pr-axis-y: 0; --pr-duration: var(--pr-push-duration, 392ms); --pr-ease: var(--pr-push-ease, var(--pr-ease-push-fallback)); }
-  .pr-stack[data-present-md="rails"] { --pr-in: 10%; --pr-out: 10%; --pr-dim: 0; --pr-axis-x: 1; --pr-axis-y: 0; --pr-duration: 240ms; --pr-ease: cubic-bezier(0.32, 0.72, 0, 1); --pr-shadow: none; }
+  .pr-stack[data-present-md="rails"] { --pr-in: 10%; --pr-out: 10%; --pr-dim: 0; --pr-lead: 0; --pr-surface: transparent; --pr-axis-x: 1; --pr-axis-y: 0; --pr-duration: 240ms; --pr-ease: cubic-bezier(0.32, 0.72, 0, 1); --pr-shadow: none; }
   .pr-stack[data-present-md="drawer"] { --pr-in: 100%; --pr-out: 0%; --pr-dim: 1; --pr-axis-x: 0; --pr-axis-y: 1; }
   .pr-stack[data-present-md="fade"] { --pr-in: 0%; --pr-out: 0%; --pr-dim: 0; --pr-axis-x: 0; --pr-axis-y: 0; --pr-duration: var(--pr-fade-duration); --pr-ease: var(--pr-fade-ease); }
   .pr-stack[data-present-md="none"] { --pr-in: 0%; --pr-out: 0%; --pr-dim: 1; --pr-axis-x: 0; --pr-axis-y: 0; --pr-duration: 1ms; }
+
+  .pr-stack[data-present-md="rails"] {
+    display: flex;
+    gap: var(--pr-rail-gap, 3rem);
+  }
+
+  .pr-stack[data-present-md="rails"] > .pr-rail {
+    display: block;
+    flex: none;
+    width: var(--pr-rail-width, 15rem);
+    align-self: flex-start;
+    position: sticky;
+    top: var(--pr-rail-top, 0px);
+  }
+
+  .pr-stack[data-present-md="rails"] > .pr-pane {
+    flex: 1;
+  }
+
+  /* The list rail travels further than the detail; admin-kit's 25% / 10%. */
+  .pr-stack[data-present-md="rails"] .pr-rail > .pr-level {
+    --pr-in: 25%;
+    --pr-out: 25%;
+    --pr-duration: 260ms;
+  }
+
+  .pr-stack[data-present-md="rails"] .pr-pane > .pr-level {
+    --pr-in: 10%;
+    --pr-out: 10%;
+    --pr-duration: 240ms;
+  }
 }
 
 @media (min-width: 1024px) {
   .pr-stack[data-present-lg="push"] { --pr-in: 100%; --pr-out: 32%; --pr-dim: 0.6; --pr-axis-x: 1; --pr-axis-y: 0; --pr-duration: var(--pr-push-duration, 392ms); --pr-ease: var(--pr-push-ease, var(--pr-ease-push-fallback)); }
-  .pr-stack[data-present-lg="rails"] { --pr-in: 10%; --pr-out: 10%; --pr-dim: 0; --pr-axis-x: 1; --pr-axis-y: 0; --pr-duration: 240ms; --pr-ease: cubic-bezier(0.32, 0.72, 0, 1); --pr-shadow: none; }
+  .pr-stack[data-present-lg="rails"] { --pr-in: 10%; --pr-out: 10%; --pr-dim: 0; --pr-lead: 0; --pr-surface: transparent; --pr-axis-x: 1; --pr-axis-y: 0; --pr-duration: 240ms; --pr-ease: cubic-bezier(0.32, 0.72, 0, 1); --pr-shadow: none; }
   .pr-stack[data-present-lg="drawer"] { --pr-in: 100%; --pr-out: 0%; --pr-dim: 1; --pr-axis-x: 0; --pr-axis-y: 1; }
   .pr-stack[data-present-lg="fade"] { --pr-in: 0%; --pr-out: 0%; --pr-dim: 0; --pr-axis-x: 0; --pr-axis-y: 0; --pr-duration: var(--pr-fade-duration); --pr-ease: var(--pr-fade-ease); }
   .pr-stack[data-present-lg="none"] { --pr-in: 0%; --pr-out: 0%; --pr-dim: 1; --pr-axis-x: 0; --pr-axis-y: 0; --pr-duration: 1ms; }
+
+  .pr-stack[data-present-lg="rails"] {
+    display: flex;
+    gap: var(--pr-rail-gap, 3rem);
+  }
+
+  .pr-stack[data-present-lg="rails"] > .pr-rail {
+    display: block;
+    flex: none;
+    width: var(--pr-rail-width, 15rem);
+    align-self: flex-start;
+    position: sticky;
+    top: var(--pr-rail-top, 0px);
+  }
+
+  .pr-stack[data-present-lg="rails"] > .pr-pane {
+    flex: 1;
+  }
+
+  /* The list rail travels further than the detail; admin-kit's 25% / 10%. */
+  .pr-stack[data-present-lg="rails"] .pr-rail > .pr-level {
+    --pr-in: 25%;
+    --pr-out: 25%;
+    --pr-duration: 260ms;
+  }
+
+  .pr-stack[data-present-lg="rails"] .pr-pane > .pr-level {
+    --pr-in: 10%;
+    --pr-out: 10%;
+    --pr-duration: 240ms;
+  }
 }
 
 /* ── Gesture ────────────────────────────────────────────────────────────── */

@@ -19,6 +19,7 @@ import {
   createResolver,
   usePresentation,
   type PresentSpec,
+  type StackEntry,
 } from "@tjcages/presentation";
 import "@tjcages/presentation/presentation.css";
 import "./demo.css";
@@ -329,48 +330,78 @@ function Screen({ path }: { path: string }) {
 
 /* ── Harness ─────────────────────────────────────────────────────────────── */
 
-/**
- * The desktop list rail.
- *
- * Mounted *outside* `<Presentation>` on purpose — that is the structural point
- * this demo exists to show. In a real app the sidebar belongs to the app shell
- * and drives navigation; the stack wraps only the content pane. If the sidebar
- * were inside the stack it would slide away with the page, which is exactly the
- * wrong thing on a wide viewport.
- */
-function Rail({ path }: { path: string }) {
-  const items = [
-    { to: "/settings/access", label: "Access & permissions" },
-    { to: "/settings/appearance", label: "Appearance" },
-    { to: "/settings/long", label: "A very long page" },
-    { to: "/settings/short", label: "A very short page" },
-    { to: "/settings/notifications", label: "Notifications" },
-  ];
+const CATEGORIES = [
+  { to: "/settings/access", label: "Access & permissions" },
+  { to: "/settings/appearance", label: "Appearance" },
+  { to: "/settings/long", label: "A very long page" },
+  { to: "/settings/short", label: "A very short page" },
+  { to: "/settings/notifications", label: "Notifications" },
+];
+
+const ACCESS_VIEWS = [
+  { to: "/settings/access/people", label: "People" },
+  { to: "/settings/access/roles", label: "Roles" },
+  { to: "/settings/access/activity", label: "Activity" },
+];
+
+function RailItem({ to, label, path }: { to: string; label: string; path: string }) {
   return (
-    <aside className="rail">
-      <Link href="/settings" className={`rail-item${path === "/settings" ? " is-active" : ""}`}>
+    <Link href={to} className={`rail-item${path.startsWith(to) ? " is-active" : ""}`}>
+      {label}
+    </Link>
+  );
+}
+
+/**
+ * Rail content for the current level.
+ *
+ * This is the half that was missing: at depth 2 the rail is a *different list*
+ * — the views inside Access — and it slides in as the pane does, 25% against
+ * the pane's 10%. A rail that never changes and never moves is not the
+ * two-rail presentation, it is a static sidebar next to an animating page.
+ *
+ * Mirrors how admin swaps `SettingsNav` for `SectionLevelNav`.
+ */
+function RailContent({ entry, path }: { entry: StackEntry; path: string }) {
+  const inAccess = entry.depth >= 2 && path.startsWith("/settings/access/");
+
+  if (inAccess) {
+    return (
+      <>
+        <Link href="/settings/access" className="rail-back">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden>
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
+          Access &amp; permissions
+        </Link>
+        <div className="rail-group">
+          {ACCESS_VIEWS.map((item) => (
+            <RailItem key={item.to} {...item} path={path} />
+          ))}
+        </div>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <Link href="/settings" className={`rail-title${path === "/settings" ? " is-active" : ""}`}>
         Settings
       </Link>
       <div className="rail-group">
-        {items.map((item) => (
-          <Link
-            key={item.to}
-            href={item.to}
-            className={`rail-item${path.startsWith(item.to) ? " is-active" : ""}`}
-          >
-            {item.label}
-          </Link>
+        {CATEGORIES.map((item) => (
+          <RailItem key={item.to} {...item} path={path} />
         ))}
       </div>
-    </aside>
+    </>
   );
 }
 
 const PRESETS: { label: string; value: PresentSpec }[] = [
   { label: "push · rails at md (default)", value: { base: "push", md: "rails" } },
+  { label: "rails everywhere", value: "rails" },
   { label: "push everywhere", value: "push" },
   { label: "push · fade at md", value: { base: "push", md: "fade" } },
-  { label: "push · no desktop transition", value: { base: "push", md: "none" } },
   { label: "drawer (explicit, unfinished)", value: "drawer" },
 ];
 
@@ -378,7 +409,6 @@ function App() {
   const [path, navigate] = useLocation();
   const [preset, setPreset] = React.useState(0);
 
-  // The demo owns the root redirect so the stack always has a root to sit on.
   React.useEffect(() => {
     if (!path.startsWith("/settings")) navigate("/settings");
   }, [path, navigate]);
@@ -402,20 +432,16 @@ function App() {
         <code className="hud">depth {entry?.depth ?? "–"}</code>
       </header>
 
-      <div className="shell">
-        <Rail path={path} />
-        <main className="pane">
-          <Presentation
-            path={path}
-            navigate={navigate}
-            resolve={resolve}
-            present={spec}
-            Link={Link}
-          >
-            <Screen path={path} />
-          </Presentation>
-        </main>
-      </div>
+      <Presentation
+        path={path}
+        navigate={navigate}
+        resolve={resolve}
+        present={spec}
+        Link={Link}
+        rail={(e) => <RailContent entry={e} path={path} />}
+      >
+        <Screen path={path} />
+      </Presentation>
     </NavigateContext.Provider>
   );
 }

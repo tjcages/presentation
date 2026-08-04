@@ -77,6 +77,23 @@ describe("usePresence", () => {
     expect(h.result.entries).toHaveLength(1);
   });
 
+  it("survives a value rebuilt on every render — the inline-content loop", () => {
+    // A host that renders its content inline (`rail={(e) => <Nav …/>}`) hands
+    // in a fresh element every time. An implementation that stores the live
+    // value and re-renders whenever its identity changes never converges.
+    let renders = 0;
+    function Probe() {
+      renders++;
+      // New object identity on every single render, deliberately.
+      const presence = usePresence("/a", { rebuilt: renders });
+      return <span>{presence.entries.length}</span>;
+    }
+    const view = render(<Probe />);
+    expect(view.container.textContent).toBe("1");
+    // Settling at all is the assertion; a loop throws "Too many re-renders".
+    expect(renders).toBeLessThan(10);
+  });
+
   it("stacks multiple exits when navigation outruns the animation", () => {
     const h = presenceHarness({ key: "/a", value: "A" });
     h.rerender({ key: "/b", value: "B" });
