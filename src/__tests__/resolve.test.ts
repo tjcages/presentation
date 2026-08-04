@@ -121,17 +121,15 @@ describe("resolvePresentation", () => {
     });
   });
 
-  it("resolves auto to a drawer for a leaf and a push for a container", () => {
-    expect(resolvePresentation("auto", entry({ leaf: true })).base).toBe("drawer");
+  it("resolves auto to a push, leaf or not — one list must not open two ways", () => {
+    expect(resolvePresentation("auto", entry({ leaf: true })).base).toBe("push");
     expect(resolvePresentation("auto", entry({ leaf: false })).base).toBe("push");
-  });
-
-  it("pushes when leafness is unknown — correct everywhere, just less expressive", () => {
     expect(resolvePresentation("auto", entry()).base).toBe("push");
+    expect(resolvePresentation("auto", entry({ depth: 0, leaf: true })).base).toBe("push");
   });
 
-  it("never drawers the root, however it is described", () => {
-    expect(resolvePresentation("auto", entry({ depth: 0, leaf: true })).base).toBe("push");
+  it("still lets a host ask for a drawer per route, explicitly", () => {
+    expect(resolvePresentation("auto", entry({ present: "drawer" })).base).toBe("drawer");
   });
 
   it("lets a level override the stack, which is how one route becomes a drawer", () => {
@@ -147,15 +145,15 @@ describe("resolvePresentation", () => {
   it("mixes auto into a breakpoint map", () => {
     const spec = { base: "auto", md: "rails" } as const;
     expect(resolvePresentation(spec, entry({ leaf: true }))).toEqual({
-      base: "drawer",
-      sm: "drawer",
+      base: "push",
+      sm: "push",
       md: "rails",
       lg: "rails",
     });
   });
 
   it("falls back to auto for a stack that declares nothing", () => {
-    expect(resolvePresentation(undefined, entry({ leaf: true })).base).toBe("drawer");
+    expect(resolvePresentation(undefined, entry({ leaf: true })).base).toBe("push");
   });
 
   it("handles a null entry — a path outside the stack", () => {

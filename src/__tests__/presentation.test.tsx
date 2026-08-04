@@ -154,9 +154,9 @@ describe("<Presentation> — presentation styles", () => {
     expect(b.container.innerHTML).toBe(html);
   });
 
-  it("auto-drawers a leaf and auto-pushes a container", () => {
+  it("pushes a leaf and a container alike — one list opens one way", () => {
     const leaf = render(<Stack path="/settings/appearance">appearance</Stack>);
-    expect(leaf.container.querySelector(".pr-stack")?.getAttribute("data-present")).toBe("drawer");
+    expect(leaf.container.querySelector(".pr-stack")?.getAttribute("data-present")).toBe("push");
     leaf.unmount();
 
     const container = render(<Stack path="/settings/access">access</Stack>);

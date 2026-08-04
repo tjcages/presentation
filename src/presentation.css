@@ -95,7 +95,22 @@
 
 /* ── Levels ─────────────────────────────────────────────────────────────── */
 
+/*
+ * Panels are opaque and cast a leading edge.
+ *
+ * A push has two levels on screen at once. Without a background they composite
+ * over each other and the departing page shows through the arriving one; the
+ * shadow is what reads as one page lying on top of another rather than two
+ * pages sharing a plane. Both were present in every implementation this was
+ * merged from, and both were missing here.
+ *
+ * The shadow sits entirely outside the panel's leading edge, so at rest — when
+ * the panel fills the stack — it falls into `overflow-x: clip` and is invisible.
+ * It only appears once the panel has moved off its resting position.
+ */
 .pr-level {
+  background: var(--pr-surface);
+  box-shadow: var(--pr-shadow);
   transform: translate3d(
     calc(var(--pr-shift, 0%) * var(--pr-axis-x)),
     calc(var(--pr-shift, 0%) * var(--pr-axis-y)),
@@ -220,6 +235,7 @@
 
 /* drawer — a single view rising from the bottom edge. */
 .pr-stack[data-present="drawer"] {
+  --pr-shadow: 0 -4px 32px -8px rgb(0 0 0 / 0.25);
   --pr-in: 100%;
   --pr-out: 0%;
   --pr-dim: 1;
@@ -240,6 +256,7 @@
 
 /* none — swap with nothing moving. */
 .pr-stack[data-present="none"] {
+  --pr-shadow: none;
   --pr-in: 0%;
   --pr-out: 0%;
   --pr-dim: 1;
@@ -295,7 +312,6 @@
 
 .pr-stack[data-dragging] .pr-level[data-role="top"] {
   transform: translate3d(var(--pr-drag, 0px), 0, 0);
-  box-shadow: var(--pr-shadow);
 }
 
 /*
@@ -339,7 +355,6 @@
 
 .pr-stack[data-releasing] .pr-level[data-role="top"] {
   transform: translate3d(var(--pr-drag), 0, 0);
-  box-shadow: var(--pr-shadow);
 }
 
 /* ── Chrome ─────────────────────────────────────────────────────────────── */

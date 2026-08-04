@@ -192,13 +192,19 @@ export function resolvePresentation(
 }
 
 /**
- * What `auto` means: a level with nothing nested under it is a single view and
- * presents as a drawer; anything that can be pushed *through* presents as a
- * push, so its back button keeps meaning "up one level" rather than "close".
- * With no route list to judge by, pushing is the safe answer — it is correct
- * for every level, just less expressive for the leaves.
+ * What `auto` means: push.
+ *
+ * It used to promote a leaf to a drawer, on the theory that a single view with
+ * nowhere further to go is drawer-shaped. In practice that makes two rows of
+ * the same list open two different ways, which reads as a bug rather than as
+ * an affordance — and the drawer here is not finished enough to earn it (no
+ * dismiss gesture, no scrim, no detents).
+ *
+ * `leaf` is still resolved and still exported, so a host that wants that
+ * behaviour can ask for it explicitly per route via `presentFor`. Choosing it
+ * silently is what has to stop.
  */
 function autoStyle(entry: StackEntry | null): PresentationStyle {
-  if (!entry || entry.depth === 0) return "push";
-  return entry.leaf === true ? "drawer" : "push";
+  void entry;
+  return "push";
 }
