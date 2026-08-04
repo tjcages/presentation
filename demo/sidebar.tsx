@@ -57,12 +57,27 @@ export const SETTINGS_NAV: NavRow[] = [
   { id: "integrations", label: "Integrations", to: "/settings/integrations", icon: PuzzlePiece01 },
 ];
 
-/** `ACCESS_SECTIONS` in `_sections.ts`. */
-export const ACCESS_SECTIONS: NavRow[] = [
-  { id: "people", label: "People", to: "/settings/access/people", icon: Users01 },
-  { id: "roles", label: "Roles", to: "/settings/access/roles", icon: Lock01 },
-  { id: "activity", label: "Activity", to: "/settings/access/activity", icon: ClockRewind },
-];
+/**
+ * `ACCESS_SECTIONS` in `_sections.ts` — id order and icons included.
+ *
+ * These are `?tab=` views on one route, not routes of their own. That is the
+ * app's actual shape, and it matters here: switching between them never
+ * changes the path, so the stack sees no navigation at all and nothing
+ * animates, which is exactly what the app does.
+ */
+export const ACCESS_SECTIONS = [
+  { id: "people", label: "People", icon: Users01 },
+  { id: "agents", label: "Agents", icon: CpuChip01 },
+  { id: "roles", label: "Roles", icon: Lock01 },
+  { id: "activity", label: "Activity", icon: ClockRewind },
+] as const;
+
+export const ACCESS_BASE = "/settings/access";
+
+/** `sectionHref` — the default section is addressed without a param. */
+export function sectionHref(id: string): string {
+  return id === "people" ? ACCESS_BASE : `${ACCESS_BASE}?tab=${id}`;
+}
 
 /* ── Primitives ─────────────────────────────────────────────────────────── */
 
@@ -224,10 +239,10 @@ export function SettingsRail({
 
 /** `SectionsMenu` — the level Access pushes: a title, then its sibling views. */
 export function AccessRail({
-  pathname,
+  section,
   Link,
 }: {
-  pathname: string;
+  section: string;
   Link: React.ComponentType<RailLinkProps>;
 }) {
   return (
@@ -236,18 +251,18 @@ export function AccessRail({
         <span className="min-w-0 flex-1 truncate">Access</span>
       </SidebarGroupLabel>
       <SidebarMenu>
-        {ACCESS_SECTIONS.map((section) => {
-          const Icon = section.icon;
+        {ACCESS_SECTIONS.map((item) => {
+          const Icon = item.icon;
           return (
-            <SidebarMenuItem key={section.id}>
+            <SidebarMenuItem key={item.id}>
               <Link
-                href={section.to}
+                href={sectionHref(item.id)}
                 data-sidebar="menu-button"
-                data-active={isActive(pathname, section.to)}
+                data-active={section === item.id}
                 className={SIDEBAR_MENU_BUTTON}
               >
                 <Icon />
-                <span>{section.label}</span>
+                <span>{item.label}</span>
               </Link>
             </SidebarMenuItem>
           );

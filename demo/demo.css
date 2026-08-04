@@ -21,6 +21,17 @@
   --color-sidebar-border: #fafafa;
   --color-sidebar-ring: #999999;
   --color-ring: #2447de;
+  --color-foreground-200: #4a4a4a;
+  --color-destructive-100: #c93a3a;
+  --color-destructive-200: #8f2626;
+
+  /* ELEVATION — each shadow carries its own 1px ring, so surfaces keep a
+     defined edge. Never paired with an extra border. */
+  --shadow-general-small:
+    0 4px 8px 0 color-mix(in oklab, black 2%, transparent),
+    0 2px 4px 0 color-mix(in oklab, black 1%, transparent),
+    0 1px 2px 0 color-mix(in oklab, black 2%, transparent),
+    0 0 0 1px color-mix(in oklab, black 3%, transparent);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -36,7 +47,78 @@
     --color-sidebar-accent: #262626;
     --color-sidebar-accent-foreground: #f2f2f2;
     --color-sidebar-ring: #6e6e6e;
+    --color-foreground-200: #b4b4b4;
+
+    /* Rings flip to white alpha so edges read on canvas. */
+    --shadow-general-small:
+      0 4px 8px 0 rgba(0, 0, 0, 0.24), 0 2px 4px 0 rgba(0, 0, 0, 0.16),
+      0 0 0 1px rgba(255, 255, 255, 0.16);
   }
+}
+
+/*
+ * TYPOGRAPHY — the ramp from packages/brand/src/typography.css, shifted one
+ * step down for dashboard density: pages lead with h2, h1 is for heroes.
+ *
+ * The brand's own faces (Bureau Sans et al.) are licensed and not vendored
+ * here, so this runs the system stack at the same sizes, weights and tracking.
+ * That is the one place the demo cannot be identical to the app.
+ */
+@layer components {
+  h1 {
+    font-size: 2rem;
+    font-weight: 400;
+    line-height: 2.25rem;
+    letter-spacing: -0.025em;
+  }
+
+  @media (max-width: 48rem) {
+    h1 {
+      font-size: 1.75rem;
+      line-height: 2rem;
+    }
+  }
+
+  h2 {
+    font-size: 1.5rem;
+    font-weight: 400;
+    line-height: 2rem;
+    letter-spacing: -0.0225em;
+  }
+
+  h3 {
+    font-size: 1.25rem;
+    font-weight: 400;
+    line-height: 1.5rem;
+    letter-spacing: -0.02em;
+  }
+
+  h6 {
+    font-size: 0.875rem;
+    font-weight: 400;
+    line-height: 1.25rem;
+    letter-spacing: 0;
+  }
+
+  h1, h2, h3, h6 {
+    -webkit-text-stroke: 0.012em currentColor;
+  }
+
+  p {
+    font-size: 0.9375rem;
+    font-weight: 300;
+    line-height: 1.375rem;
+  }
+}
+
+/* Decorative mono micro-label — eyebrows, table headers, badges, meta. */
+@utility text-decorative {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 /*
@@ -134,100 +216,7 @@ body {
   color: var(--color-foreground-300);
 }
 
-.page {
-  padding: 16px 16px 48px;
-}
 
-@media (min-width: 768px) {
-  .page {
-    padding: 24px 28px 64px;
-    max-width: 860px;
-  }
-}
-
-h1 {
-  font-size: 26px;
-  margin: 8px 0 4px;
-  font-weight: 500;
-}
-
-h2 {
-  font-size: 20px;
-  margin: 8px 0 4px;
-  font-weight: 500;
-}
-
-.lede {
-  color: var(--color-foreground-300);
-  margin: 0 0 16px;
-  max-width: 60ch;
-}
-
-.lede code {
-  background: var(--color-background-200);
-  padding: 1px 4px;
-  border-radius: 4px;
-}
-
-.group {
-  border: 1px solid var(--color-border-100);
-  border-radius: 12px;
-  overflow: hidden;
-  background: var(--color-background-100);
-  margin-bottom: 20px;
-}
-
-.row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  min-height: 52px;
-  padding: 10px 14px;
-  color: inherit;
-  text-decoration: none;
-  border-bottom: 1px solid var(--color-border-100);
-}
-
-.row:last-child {
-  border-bottom: 0;
-}
-
-.row:active {
-  background: var(--color-background-200);
-}
-
-.row span {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.row small {
-  color: var(--color-foreground-300);
-  font-size: 12px;
-}
-
-.row svg {
-  color: var(--color-foreground-300);
-  flex: none;
-}
-
-.btn {
-  font: inherit;
-  font-size: 13px;
-  padding: 6px 10px;
-  border-radius: 8px;
-  border: 1px solid var(--color-border-100);
-  background: var(--color-background-100);
-  color: var(--color-accent-100);
-  cursor: pointer;
-}
-
-.btn:active {
-  opacity: 0.6;
-}
 
 /* ── The nested horizontal scrollers the gesture must not break ─────────── */
 
