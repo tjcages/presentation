@@ -46,9 +46,17 @@
   --pr-out: 32%; /* how far a departing level parallaxes */
   --pr-dim: 0.6; /* opacity of a departing level */
 
-  /* Which axis the endpoints act on. Drawers flip this to Y. */
-  --pr-tx: var(--pr-shift);
-  --pr-ty: 0px;
+  /*
+   * Which axis the endpoints act on. Drawers flip this to Y.
+   *
+   * These are plain multipliers rather than `--pr-tx: var(--pr-shift)`,
+   * because a custom property is resolved in the scope that *declares* it,
+   * not the scope that uses it. `--pr-shift` is set per level, so referring to
+   * it from here would resolve against the stack — where it does not exist —
+   * and silently collapse the whole transform to identity.
+   */
+  --pr-axis-x: 1;
+  --pr-axis-y: 0;
 
   /*
    * Duration and easing are a sampled spring, and the sample lives in
@@ -88,7 +96,11 @@
 /* ── Levels ─────────────────────────────────────────────────────────────── */
 
 .pr-level {
-  transform: translate3d(var(--pr-tx), var(--pr-ty), 0);
+  transform: translate3d(
+    calc(var(--pr-shift, 0%) * var(--pr-axis-x)),
+    calc(var(--pr-shift, 0%) * var(--pr-axis-y)),
+    0
+  );
   will-change: transform, opacity;
 }
 
@@ -132,7 +144,11 @@
 
 @keyframes pr-enter {
   from {
-    transform: translate3d(var(--pr-tx), var(--pr-ty), 0);
+    transform: translate3d(
+      calc(var(--pr-shift, 0%) * var(--pr-axis-x)),
+      calc(var(--pr-shift, 0%) * var(--pr-axis-y)),
+      0
+    );
     opacity: var(--pr-opacity);
   }
   to {
@@ -147,7 +163,11 @@
     opacity: 1;
   }
   to {
-    transform: translate3d(var(--pr-tx), var(--pr-ty), 0);
+    transform: translate3d(
+      calc(var(--pr-shift, 0%) * var(--pr-axis-x)),
+      calc(var(--pr-shift, 0%) * var(--pr-axis-y)),
+      0
+    );
     opacity: var(--pr-opacity);
   }
 }
@@ -174,8 +194,8 @@
   --pr-in: 100%;
   --pr-out: 32%;
   --pr-dim: 0.6;
-  --pr-tx: var(--pr-shift);
-  --pr-ty: 0px;
+  --pr-axis-x: 1;
+  --pr-axis-y: 0;
 }
 
 /*
@@ -187,8 +207,8 @@
   --pr-in: 25%;
   --pr-out: 25%;
   --pr-dim: 0;
-  --pr-tx: var(--pr-shift);
-  --pr-ty: 0px;
+  --pr-axis-x: 1;
+  --pr-axis-y: 0;
   --pr-duration: 260ms;
 }
 
@@ -203,8 +223,8 @@
   --pr-in: 100%;
   --pr-out: 0%;
   --pr-dim: 1;
-  --pr-tx: 0px;
-  --pr-ty: var(--pr-shift);
+  --pr-axis-x: 0;
+  --pr-axis-y: 1;
 }
 
 /* fade — crossfade in place. */
@@ -212,8 +232,8 @@
   --pr-in: 0%;
   --pr-out: 0%;
   --pr-dim: 0;
-  --pr-tx: 0px;
-  --pr-ty: 0px;
+  --pr-axis-x: 0;
+  --pr-axis-y: 0;
   --pr-duration: var(--pr-fade-duration);
   --pr-ease: var(--pr-fade-ease);
 }
@@ -223,8 +243,8 @@
   --pr-in: 0%;
   --pr-out: 0%;
   --pr-dim: 1;
-  --pr-tx: 0px;
-  --pr-ty: 0px;
+  --pr-axis-x: 0;
+  --pr-axis-y: 0;
   --pr-duration: 1ms;
 }
 
@@ -236,27 +256,27 @@
  * a utility-CSS cascade would.
  */
 @media (min-width: 640px) {
-  .pr-stack[data-present-sm="push"] { --pr-in: 100%; --pr-out: 32%; --pr-dim: 0.6; --pr-tx: var(--pr-shift); --pr-ty: 0px; }
-  .pr-stack[data-present-sm="rails"] { --pr-in: 25%; --pr-out: 25%; --pr-dim: 0; --pr-tx: var(--pr-shift); --pr-ty: 0px; --pr-duration: 260ms; }
-  .pr-stack[data-present-sm="drawer"] { --pr-in: 100%; --pr-out: 0%; --pr-dim: 1; --pr-tx: 0px; --pr-ty: var(--pr-shift); }
-  .pr-stack[data-present-sm="fade"] { --pr-in: 0%; --pr-out: 0%; --pr-dim: 0; --pr-tx: 0px; --pr-ty: 0px; --pr-duration: var(--pr-fade-duration); --pr-ease: var(--pr-fade-ease); }
-  .pr-stack[data-present-sm="none"] { --pr-in: 0%; --pr-out: 0%; --pr-dim: 1; --pr-tx: 0px; --pr-ty: 0px; --pr-duration: 1ms; }
+  .pr-stack[data-present-sm="push"] { --pr-in: 100%; --pr-out: 32%; --pr-dim: 0.6; --pr-axis-x: 1; --pr-axis-y: 0; }
+  .pr-stack[data-present-sm="rails"] { --pr-in: 25%; --pr-out: 25%; --pr-dim: 0; --pr-axis-x: 1; --pr-axis-y: 0; --pr-duration: 260ms; }
+  .pr-stack[data-present-sm="drawer"] { --pr-in: 100%; --pr-out: 0%; --pr-dim: 1; --pr-axis-x: 0; --pr-axis-y: 1; }
+  .pr-stack[data-present-sm="fade"] { --pr-in: 0%; --pr-out: 0%; --pr-dim: 0; --pr-axis-x: 0; --pr-axis-y: 0; --pr-duration: var(--pr-fade-duration); --pr-ease: var(--pr-fade-ease); }
+  .pr-stack[data-present-sm="none"] { --pr-in: 0%; --pr-out: 0%; --pr-dim: 1; --pr-axis-x: 0; --pr-axis-y: 0; --pr-duration: 1ms; }
 }
 
 @media (min-width: 768px) {
-  .pr-stack[data-present-md="push"] { --pr-in: 100%; --pr-out: 32%; --pr-dim: 0.6; --pr-tx: var(--pr-shift); --pr-ty: 0px; }
-  .pr-stack[data-present-md="rails"] { --pr-in: 25%; --pr-out: 25%; --pr-dim: 0; --pr-tx: var(--pr-shift); --pr-ty: 0px; --pr-duration: 260ms; }
-  .pr-stack[data-present-md="drawer"] { --pr-in: 100%; --pr-out: 0%; --pr-dim: 1; --pr-tx: 0px; --pr-ty: var(--pr-shift); }
-  .pr-stack[data-present-md="fade"] { --pr-in: 0%; --pr-out: 0%; --pr-dim: 0; --pr-tx: 0px; --pr-ty: 0px; --pr-duration: var(--pr-fade-duration); --pr-ease: var(--pr-fade-ease); }
-  .pr-stack[data-present-md="none"] { --pr-in: 0%; --pr-out: 0%; --pr-dim: 1; --pr-tx: 0px; --pr-ty: 0px; --pr-duration: 1ms; }
+  .pr-stack[data-present-md="push"] { --pr-in: 100%; --pr-out: 32%; --pr-dim: 0.6; --pr-axis-x: 1; --pr-axis-y: 0; }
+  .pr-stack[data-present-md="rails"] { --pr-in: 25%; --pr-out: 25%; --pr-dim: 0; --pr-axis-x: 1; --pr-axis-y: 0; --pr-duration: 260ms; }
+  .pr-stack[data-present-md="drawer"] { --pr-in: 100%; --pr-out: 0%; --pr-dim: 1; --pr-axis-x: 0; --pr-axis-y: 1; }
+  .pr-stack[data-present-md="fade"] { --pr-in: 0%; --pr-out: 0%; --pr-dim: 0; --pr-axis-x: 0; --pr-axis-y: 0; --pr-duration: var(--pr-fade-duration); --pr-ease: var(--pr-fade-ease); }
+  .pr-stack[data-present-md="none"] { --pr-in: 0%; --pr-out: 0%; --pr-dim: 1; --pr-axis-x: 0; --pr-axis-y: 0; --pr-duration: 1ms; }
 }
 
 @media (min-width: 1024px) {
-  .pr-stack[data-present-lg="push"] { --pr-in: 100%; --pr-out: 32%; --pr-dim: 0.6; --pr-tx: var(--pr-shift); --pr-ty: 0px; }
-  .pr-stack[data-present-lg="rails"] { --pr-in: 25%; --pr-out: 25%; --pr-dim: 0; --pr-tx: var(--pr-shift); --pr-ty: 0px; --pr-duration: 260ms; }
-  .pr-stack[data-present-lg="drawer"] { --pr-in: 100%; --pr-out: 0%; --pr-dim: 1; --pr-tx: 0px; --pr-ty: var(--pr-shift); }
-  .pr-stack[data-present-lg="fade"] { --pr-in: 0%; --pr-out: 0%; --pr-dim: 0; --pr-tx: 0px; --pr-ty: 0px; --pr-duration: var(--pr-fade-duration); --pr-ease: var(--pr-fade-ease); }
-  .pr-stack[data-present-lg="none"] { --pr-in: 0%; --pr-out: 0%; --pr-dim: 1; --pr-tx: 0px; --pr-ty: 0px; --pr-duration: 1ms; }
+  .pr-stack[data-present-lg="push"] { --pr-in: 100%; --pr-out: 32%; --pr-dim: 0.6; --pr-axis-x: 1; --pr-axis-y: 0; }
+  .pr-stack[data-present-lg="rails"] { --pr-in: 25%; --pr-out: 25%; --pr-dim: 0; --pr-axis-x: 1; --pr-axis-y: 0; --pr-duration: 260ms; }
+  .pr-stack[data-present-lg="drawer"] { --pr-in: 100%; --pr-out: 0%; --pr-dim: 1; --pr-axis-x: 0; --pr-axis-y: 1; }
+  .pr-stack[data-present-lg="fade"] { --pr-in: 0%; --pr-out: 0%; --pr-dim: 0; --pr-axis-x: 0; --pr-axis-y: 0; --pr-duration: var(--pr-fade-duration); --pr-ease: var(--pr-fade-ease); }
+  .pr-stack[data-present-lg="none"] { --pr-in: 0%; --pr-out: 0%; --pr-dim: 1; --pr-axis-x: 0; --pr-axis-y: 0; --pr-duration: 1ms; }
 }
 
 /* ── Gesture ────────────────────────────────────────────────────────────── */

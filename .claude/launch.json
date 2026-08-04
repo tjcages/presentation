@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "presentation-demo",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["demo", "--port", "5187", "--strictPort"],
+      "port": 5187
+    }
+  ]
+}

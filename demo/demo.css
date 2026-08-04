@@ -1,0 +1,164 @@
+/* Demo chrome only. Nothing here is part of the package. */
+
+:root {
+  --bg: #fff;
+  --fg: #101012;
+  --muted: #6b6b74;
+  --line: #e6e6ea;
+  --accent: #0a68ff;
+  --surface: #fff;
+  --raised: #f6f6f8;
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0b0b0d;
+    --fg: #f2f2f5;
+    --muted: #9a9aa4;
+    --line: #26262c;
+    --accent: #5c9dff;
+    --surface: #131317;
+    --raised: #1b1b21;
+  }
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: 15px/1.5 ui-sans-serif, -apple-system, "SF Pro Text", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Hand the package its surface colour so the bar's blur has something to blur. */
+.pr-stack {
+  --pr-surface: var(--surface);
+  --pr-backdrop: rgb(0 0 0 / 0.18);
+  min-height: 100dvh;
+  background: var(--bg);
+}
+
+.pr-bar {
+  border-bottom: 1px solid var(--line);
+  color: var(--fg);
+}
+
+.pr-bar-back { color: var(--accent); font-weight: 500; }
+.pr-bar-title { font-size: 15px; }
+
+.chrome {
+  position: sticky;
+  top: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--raised);
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+}
+
+.chrome .brand { font-weight: 500; }
+.chrome select {
+  font: inherit;
+  padding: 4px 6px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: inherit;
+}
+.chrome .hud { margin-left: auto; color: var(--muted); }
+
+/* The bar is sticky under the demo's own sticky header. */
+.pr-bar { top: 37px; }
+
+.page { padding: 16px 16px 48px; }
+
+h1 { font-size: 26px; margin: 8px 0 4px; font-weight: 500; }
+h2 { font-size: 20px; margin: 8px 0 4px; font-weight: 500; }
+
+.lede { color: var(--muted); margin: 0 0 16px; max-width: 60ch; }
+.lede code { background: var(--raised); padding: 1px 4px; border-radius: 4px; }
+
+.group {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--surface);
+  margin-bottom: 20px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 52px;
+  padding: 10px 14px;
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px solid var(--line);
+}
+
+.row:last-child { border-bottom: 0; }
+.row:active { background: var(--raised); }
+.row span { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.row small { color: var(--muted); font-size: 12px; }
+.row svg { color: var(--muted); flex: none; }
+
+.btn {
+  font: inherit;
+  font-size: 13px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--accent);
+  cursor: pointer;
+}
+.btn:active { opacity: 0.6; }
+
+/* ── The nested horizontal scrollers the gesture must not break ─────────── */
+
+.matrix {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  margin-bottom: 20px;
+  background: var(--surface);
+}
+
+.matrix table { border-collapse: collapse; min-width: 640px; font-size: 13px; }
+.matrix th, .matrix td { padding: 8px 12px; border-bottom: 1px solid var(--line); text-align: center; white-space: nowrap; }
+.matrix thead th { position: sticky; top: 0; background: var(--raised); font-weight: 500; }
+.matrix th[scope="row"] { text-align: left; font-weight: 400; }
+
+.carousel {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  padding-bottom: 8px;
+  /* Horizontal padding belongs on the content, not the frame, or the last
+     card clips at the edge while scrolling. */
+  padding-inline: 2px;
+}
+
+.card {
+  flex: none;
+  width: 120px;
+  height: 80px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  font-size: 13px;
+}
