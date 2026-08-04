@@ -534,6 +534,20 @@
   }
 }
 
+/*
+ * Rail-only: the whole stack is the rail, so it takes the full width and there
+ * is no pane to sit beside. A sidebar mounting levels this way wants no fixed
+ * rail width and no gap.
+ */
+.pr-stack[data-rail-only] > .pr-rail {
+  width: 100%;
+  position: static;
+}
+
+.pr-stack[data-rail-only] {
+  gap: 0;
+}
+
 /* ── Gesture ────────────────────────────────────────────────────────────── */
 
 /*

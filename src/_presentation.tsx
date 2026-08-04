@@ -35,8 +35,15 @@ export interface PresentationProps {
   navigate: (path: string) => void;
   /** Where a path sits in the stack. See `createResolver`. */
   resolve: Resolver;
-  /** The level's content, from the host router. */
-  children: React.ReactNode;
+  /**
+   * The level's content, from the host router.
+   *
+   * Omit it to run rail-only: a stack that is nothing but its levels, which is
+   * what a sidebar is. Admin mounts NavStack that way — `rootRight={null}`,
+   * full-width left rail, no gap — so the levels push inside the sidebar with
+   * no detail pane beside them.
+   */
+  children?: React.ReactNode;
   /**
    * How levels present themselves — one style, or one per breakpoint.
    * Resolved in CSS, so this costs no media query and no hydration reflow.
@@ -167,6 +174,8 @@ export function Presentation({
 
   const beneath = dragging ? recall(depth - 1) : undefined;
   const push = springEasing(SPRINGS.push);
+  // A stack with no content is all rail: the sidebar case.
+  const railOnly = children == null;
 
   return (
     <PresentationProvider value={context}>
@@ -180,6 +189,7 @@ export function Presentation({
         data-depth={depth}
         data-level={level}
         data-same-level={sameLevel ? "" : undefined}
+        data-rail-only={railOnly ? "" : undefined}
         // The push spring lives in `_springs.ts`. It is published under its own
         // names rather than as `--pr-duration`/`--pr-ease` directly: an inline
         // declaration outranks every stylesheet rule, so writing the generic
@@ -216,6 +226,7 @@ export function Presentation({
           </div>
         ) : null}
 
+        {railOnly ? null : (
         <div className="pr-pane">
         {beneath !== undefined ? (
           <div className="pr-level" data-role="beneath" aria-hidden="true">
@@ -254,6 +265,7 @@ export function Presentation({
           );
         })}
         </div>
+        )}
       </div>
     </PresentationProvider>
   );

@@ -1,7 +1,11 @@
 {
   "compilerOptions": {
     "target": "ES2022",
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
     "module": "ESNext",
     "moduleResolution": "bundler",
     "jsx": "react-jsx",
@@ -10,7 +14,21 @@
     "noEmit": true,
     "skipLibCheck": true,
     "verbatimModuleSyntax": true,
-    "isolatedModules": true
+    "isolatedModules": true,
+    "paths": {
+      "@tjcages/presentation": [
+        "./src/index.ts"
+      ],
+      "@tjcages/presentation/presentation.css": [
+        "./src/presentation.css"
+      ]
+    }
   },
-  "include": ["src"]
+  "include": [
+    "src",
+    "demo"
+  ],
+  "exclude": [
+    "demo/vite.config.ts"
+  ]
 }

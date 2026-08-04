@@ -24,7 +24,8 @@ import {
 import "@tjcages/presentation/presentation.css";
 import "./demo.css";
 
-import { AccessRail, SettingsRail, type RailLinkProps } from "./sidebar";
+import { AppChrome } from "./chrome";
+import type { AdminKitLinkProps } from "./admin-kit/context";
 import { SettingsShell } from "./kit";
 import {
   AccessPage,
@@ -61,24 +62,23 @@ function useLocation(): [string, string, (href: string) => void] {
 
 const NavigateContext = React.createContext<(path: string) => void>(() => undefined);
 
-function Link({
-  href,
-  className,
-  children,
-  onClick,
-  ...rest
-}: RailLinkProps & { onClick?: (e: React.MouseEvent) => void }) {
+/**
+ * The kit's link contract: `to`, and every other anchor prop spread through —
+ * `SidebarMenuButton asChild` merges `data-active`, tooltip handlers and the
+ * rest onto it via Radix `Slot`, so swallowing them breaks active state.
+ */
+function Link({ to, end, children, ...rest }: AdminKitLinkProps) {
   const navigate = React.useContext(NavigateContext);
+  void end;
   return (
     <a
-      href={href}
-      className={className}
+      href={to}
       {...rest}
       onClick={(e) => {
-        onClick?.(e);
+        rest.onClick?.(e);
         if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey) return;
         e.preventDefault();
-        navigate(href);
+        navigate(to);
       }}
     >
       {children}
@@ -134,28 +134,10 @@ function Screen({ path, section }: { path: string; section: AccessSection }) {
 
 /* ── Harness ─────────────────────────────────────────────────────────────── */
 
-/**
- * `admin-kit`'s NavStack renders its back affordance at the top of the left
- * rail on any pushed level. Same classes, same chevron.
- */
-function RailBack({ label, onClick }: { label: string; onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="text-foreground-300 hover:text-foreground-100 -ml-1 mb-3 inline-flex w-full min-w-0 items-center gap-1 rounded-md px-1 py-1 text-sm font-medium transition-colors"
-    >
-      <ChevronLeft className="size-4 shrink-0" />
-      <span className="truncate text-left">{label}</span>
-    </button>
-  );
-}
-
 const PRESETS: { label: string; value: PresentSpec }[] = [
   { label: "push · rails at md (default)", value: { base: "push", md: "rails" } },
-  { label: "rails everywhere", value: "rails" },
   { label: "push everywhere", value: "push" },
-  { label: "push · fade at md", value: { base: "push", md: "fade" } },
+  { label: "rails everywhere", value: "rails" },
 ];
 
 function App() {
@@ -167,62 +149,34 @@ function App() {
   }, [path, navigate]);
 
   const section = toAccessSection(new URLSearchParams(search).get("tab"));
-  const entry = resolve(path);
   const spec = PRESETS[preset]?.value ?? "push";
-
-  /**
-   * Rail content per level, mirroring how `_app-chrome.tsx` builds
-   * `sidebarScreens`: the settings categories, and — once inside a settings
-   * sub-level — that level's sibling views under a back affordance.
-   */
-  const rail = React.useCallback(
-    (e: StackEntry) => {
-      if (e.level >= 1) {
-        return (
-          <>
-            {/*
-              * The back affordance names where it *goes*, not where it is —
-              * admin's `sidebarBackLabel: "Settings"` with
-              * `router.push("/settings")`. Labelling it with the current
-              * level's own title and pointing it at the current level's own
-              * path makes it a no-op that claims to be a way out.
-              */}
-            <RailBack label="Settings" onClick={() => navigate("/settings")} />
-            <AccessRail section={section} Link={Link} />
-          </>
-        );
-      }
-      return <SettingsRail pathname={path} Link={Link} />;
-    },
-    [path, section, navigate],
-  );
 
   return (
     <NavigateContext.Provider value={navigate}>
-      <header className="chrome">
-        <span className="brand">@tjcages/presentation</span>
+      <div className="fixed right-3 top-3 z-[100] flex items-center gap-2 text-xs">
         <select
           value={preset}
           onChange={(e) => setPreset(Number(e.target.value))}
           aria-label="Presentation style"
+          className="border-border-100 bg-background-100 text-foreground-100 rounded-md border px-2 py-1"
         >
           {PRESETS.map((p, i) => (
             <option key={p.label} value={i}>{p.label}</option>
           ))}
         </select>
-        <code className="hud">depth {entry?.depth ?? "–"}</code>
-      </header>
+      </div>
 
-      <Presentation
-        path={path}
-        navigate={navigate}
-        resolve={resolve}
-        present={spec}
-        Link={Link}
-        rail={rail}
-      >
-        <Screen path={path} section={section} />
-      </Presentation>
+      <AppChrome pathname={path} navigate={navigate} Link={Link}>
+        <Presentation
+          path={path}
+          navigate={navigate}
+          resolve={resolve}
+          present={spec}
+          bar={false}
+        >
+          <Screen path={path} section={section} />
+        </Presentation>
+      </AppChrome>
     </NavigateContext.Provider>
   );
 }

@@ -30,7 +30,7 @@ import {
 
 /* ── General ─────────────────────────────────────────────────────────────── */
 
-const USER = { name: "Ty Cagle", email: "ty@off-brand.studio" };
+const USER = { name: "Tyler J. Cagle", email: "ty@audiophysical.com" };
 
 export function GeneralPage() {
   return (
@@ -275,9 +275,9 @@ export function PricingPage() {
 /* ── Access ──────────────────────────────────────────────────────────────── */
 
 const PEOPLE = [
-  ["Ty Cagle", "ty@off-brand.studio", "Owner"],
-  ["Jordan Reese", "jordan@off-brand.studio", "Admin"],
-  ["Sam Okafor", "sam@off-brand.studio", "Editor"],
+  ["Tyler J. Cagle", "ty@audiophysical.com", "Owner"],
+  ["Jordan Reese", "jordan@audiophysical.com", "Admin"],
+  ["Sam Okafor", "sam@audiophysical.com", "Editor"],
   ["Priya Raman", "priya@partner.example", "Analyst"],
   ["Alex Chen", "alex@partner.example", "Viewer"],
 ];
@@ -419,7 +419,7 @@ function AccessActivity() {
                 Role changed to <span className="font-medium">Editor</span>
               </span>
               <span className="text-foreground-300 truncate text-xs">
-                sam@off-brand.studio · {i + 1} hour{i === 0 ? "" : "s"} ago
+                sam@audiophysical.com · {i + 1} hour{i === 0 ? "" : "s"} ago
               </span>
             </div>
           </div>
