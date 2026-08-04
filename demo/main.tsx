@@ -329,12 +329,49 @@ function Screen({ path }: { path: string }) {
 
 /* ── Harness ─────────────────────────────────────────────────────────────── */
 
+/**
+ * The desktop list rail.
+ *
+ * Mounted *outside* `<Presentation>` on purpose — that is the structural point
+ * this demo exists to show. In a real app the sidebar belongs to the app shell
+ * and drives navigation; the stack wraps only the content pane. If the sidebar
+ * were inside the stack it would slide away with the page, which is exactly the
+ * wrong thing on a wide viewport.
+ */
+function Rail({ path }: { path: string }) {
+  const items = [
+    { to: "/settings/access", label: "Access & permissions" },
+    { to: "/settings/appearance", label: "Appearance" },
+    { to: "/settings/long", label: "A very long page" },
+    { to: "/settings/short", label: "A very short page" },
+    { to: "/settings/notifications", label: "Notifications" },
+  ];
+  return (
+    <aside className="rail">
+      <Link href="/settings" className={`rail-item${path === "/settings" ? " is-active" : ""}`}>
+        Settings
+      </Link>
+      <div className="rail-group">
+        {items.map((item) => (
+          <Link
+            key={item.to}
+            href={item.to}
+            className={`rail-item${path.startsWith(item.to) ? " is-active" : ""}`}
+          >
+            {item.label}
+          </Link>
+        ))}
+      </div>
+    </aside>
+  );
+}
+
 const PRESETS: { label: string; value: PresentSpec }[] = [
-  { label: "auto", value: "auto" },
+  { label: "push · rails at md (default)", value: { base: "push", md: "rails" } },
   { label: "push everywhere", value: "push" },
-  { label: "push → fade at md", value: { base: "push", md: "fade" } },
-  { label: "drawer", value: "drawer" },
-  { label: "none", value: "none" },
+  { label: "push · fade at md", value: { base: "push", md: "fade" } },
+  { label: "push · no desktop transition", value: { base: "push", md: "none" } },
+  { label: "drawer (explicit, unfinished)", value: "drawer" },
 ];
 
 function App() {
@@ -347,6 +384,7 @@ function App() {
   }, [path, navigate]);
 
   const entry = resolve(path);
+  const spec = PRESETS[preset]?.value ?? "push";
 
   return (
     <NavigateContext.Provider value={navigate}>
@@ -361,20 +399,23 @@ function App() {
             <option key={p.label} value={i}>{p.label}</option>
           ))}
         </select>
-        <code className="hud">
-          depth {entry?.depth ?? "–"} · {entry?.leaf ? "leaf" : "container"}
-        </code>
+        <code className="hud">depth {entry?.depth ?? "–"}</code>
       </header>
 
-      <Presentation
-        path={path}
-        navigate={navigate}
-        resolve={resolve}
-        present={PRESETS[preset]!.value}
-        Link={Link}
-      >
-        <Screen path={path} />
-      </Presentation>
+      <div className="shell">
+        <Rail path={path} />
+        <main className="pane">
+          <Presentation
+            path={path}
+            navigate={navigate}
+            resolve={resolve}
+            present={spec}
+            Link={Link}
+          >
+            <Screen path={path} />
+          </Presentation>
+        </main>
+      </div>
     </NavigateContext.Provider>
   );
 }

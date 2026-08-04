@@ -124,13 +124,15 @@ export function Presentation({
         data-present-md={styles.md}
         data-present-lg={styles.lg}
         data-depth={depth}
-        // The spring lives in `_springs.ts`; the stylesheet carries a matching
-        // fallback for anyone using it without this component. Reduced motion
-        // overrides both — it declares `!important`, which outranks inline.
+        // The push spring lives in `_springs.ts`. It is published under its own
+        // names rather than as `--pr-duration`/`--pr-ease` directly: an inline
+        // declaration outranks every stylesheet rule, so writing the generic
+        // names here would force the push's timing onto `rails`, `fade` and
+        // `none` too. Only the `push` block reads these.
         style={
           {
-            "--pr-duration": `${push.duration}ms`,
-            "--pr-ease": push.easing,
+            "--pr-push-duration": `${push.duration}ms`,
+            "--pr-push-ease": push.easing,
           } as React.CSSProperties
         }
       >

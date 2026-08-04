@@ -162,3 +162,74 @@ h2 { font-size: 20px; margin: 8px 0 4px; font-weight: 500; }
   background: var(--surface);
   font-size: 13px;
 }
+
+/* ── Shell: a list rail beside the content pane, desktop only ───────────── */
+
+.shell {
+  display: flex;
+  align-items: flex-start;
+}
+
+.pane {
+  flex: 1;
+  min-width: 0;
+}
+
+/*
+ * The rail is hidden on a phone: there the stack IS the navigation, and the
+ * root level shows the same list. Above `md` the rail takes over and the
+ * content pane stops being a full-page push (see the `rails` preset).
+ */
+.rail {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .rail {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    position: sticky;
+    top: 37px;
+    flex: none;
+    width: 232px;
+    padding: 16px 8px;
+    border-right: 1px solid var(--line);
+    min-height: calc(100dvh - 37px);
+  }
+
+  .rail-group {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-top: 12px;
+  }
+
+  .rail-item {
+    padding: 7px 10px;
+    border-radius: 8px;
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 13px;
+  }
+
+  .rail-item:hover {
+    background: var(--raised);
+  }
+
+  .rail-item.is-active {
+    background: var(--raised);
+    color: var(--fg);
+    font-weight: 500;
+  }
+
+  /* The mobile nav bar is redundant once the rail is showing the same levels. */
+  .pr-bar {
+    display: none;
+  }
+
+  .page {
+    padding: 24px 28px 64px;
+    max-width: 860px;
+  }
+}

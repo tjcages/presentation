@@ -64,8 +64,8 @@
    * there is one source of truth. These are the fallback for anyone using the
    * stylesheet on its own, and are kept in step with `SPRINGS.push`.
    */
-  --pr-duration: 300ms;
-  --pr-ease: linear(
+  --pr-duration: 392ms;
+  --pr-ease-push-fallback: linear(
     0 0%, 0.042 2.564%, 0.126 5.128%, 0.237 7.692%, 0.351 10.256%,
     0.453 12.821%, 0.551 15.385%, 0.631 17.949%, 0.705 20.513%, 0.765 23.077%,
     0.812 25.641%, 0.853 28.205%, 0.886 30.769%, 0.91 33.333%, 0.931 35.897%,
@@ -75,6 +75,7 @@
     0.999 76.923%, 0.999 79.487%, 1 82.051%, 1 84.615%, 1 87.179%,
     1 89.744%, 1 92.308%, 1 94.872%, 1 97.436%, 1 100%
   );
+  --pr-ease: var(--pr-ease-push-fallback);
 
   --pr-fade-duration: 160ms;
   --pr-fade-ease: cubic-bezier(0.32, 0.72, 0, 1);
@@ -211,26 +212,40 @@
   --pr-dim: 0.6;
   --pr-axis-x: 1;
   --pr-axis-y: 0;
+  /*
+   * The component publishes the sampled push spring as `--pr-push-*`; the
+   * fallbacks below are for anyone using this stylesheet on its own. Only this
+   * block consumes them, so the push's timing cannot leak onto the other
+   * styles the way a bare inline `--pr-duration` would.
+   */
+  --pr-duration: var(--pr-push-duration, 392ms);
+  --pr-ease: var(--pr-push-ease, var(--pr-ease-push-fallback));
 }
 
 /*
- * rails — a list and a detail moving together. A shorter throw than a push,
- * because on a wide viewport the two rails stay visible throughout and a
- * full-width slide reads as a page reload rather than as a drill-in.
+ * rails — the detail half of a two-rail layout.
+ *
+ * This does not lay anything out. It is the motion a *content pane* uses when
+ * a separate list rail — a sidebar the host already owns — is driving the
+ * navigation. Both move on the same push, so the throw is short and crossfaded
+ * rather than a full slide: on a wide viewport both rails stay on screen
+ * throughout, and a full-width slide there reads as a page reload instead of a
+ * drill-in.
+ *
+ * Tuned to sit in step with `admin-kit`'s NavStack, whose left rail travels 25%
+ * over 260ms and whose right rail travels 10% over 240ms. These are the right
+ * rail's numbers, so a host running both sees one gesture, not two.
  */
 .pr-stack[data-present="rails"] {
-  --pr-in: 25%;
-  --pr-out: 25%;
+  --pr-in: 10%;
+  --pr-out: 10%;
   --pr-dim: 0;
   --pr-axis-x: 1;
   --pr-axis-y: 0;
-  --pr-duration: 260ms;
-}
-
-.pr-stack[data-present="rails"] .pr-rail-detail {
-  --pr-in: 10%;
-  --pr-out: 10%;
   --pr-duration: 240ms;
+  --pr-ease: cubic-bezier(0.32, 0.72, 0, 1);
+  /* Both rails stay put; a cast edge between them would be a seam. */
+  --pr-shadow: none;
 }
 
 /* drawer — a single view rising from the bottom edge. */
@@ -273,24 +288,24 @@
  * a utility-CSS cascade would.
  */
 @media (min-width: 640px) {
-  .pr-stack[data-present-sm="push"] { --pr-in: 100%; --pr-out: 32%; --pr-dim: 0.6; --pr-axis-x: 1; --pr-axis-y: 0; }
-  .pr-stack[data-present-sm="rails"] { --pr-in: 25%; --pr-out: 25%; --pr-dim: 0; --pr-axis-x: 1; --pr-axis-y: 0; --pr-duration: 260ms; }
+  .pr-stack[data-present-sm="push"] { --pr-in: 100%; --pr-out: 32%; --pr-dim: 0.6; --pr-axis-x: 1; --pr-axis-y: 0; --pr-duration: var(--pr-push-duration, 392ms); --pr-ease: var(--pr-push-ease, var(--pr-ease-push-fallback)); }
+  .pr-stack[data-present-sm="rails"] { --pr-in: 10%; --pr-out: 10%; --pr-dim: 0; --pr-axis-x: 1; --pr-axis-y: 0; --pr-duration: 240ms; --pr-ease: cubic-bezier(0.32, 0.72, 0, 1); --pr-shadow: none; }
   .pr-stack[data-present-sm="drawer"] { --pr-in: 100%; --pr-out: 0%; --pr-dim: 1; --pr-axis-x: 0; --pr-axis-y: 1; }
   .pr-stack[data-present-sm="fade"] { --pr-in: 0%; --pr-out: 0%; --pr-dim: 0; --pr-axis-x: 0; --pr-axis-y: 0; --pr-duration: var(--pr-fade-duration); --pr-ease: var(--pr-fade-ease); }
   .pr-stack[data-present-sm="none"] { --pr-in: 0%; --pr-out: 0%; --pr-dim: 1; --pr-axis-x: 0; --pr-axis-y: 0; --pr-duration: 1ms; }
 }
 
 @media (min-width: 768px) {
-  .pr-stack[data-present-md="push"] { --pr-in: 100%; --pr-out: 32%; --pr-dim: 0.6; --pr-axis-x: 1; --pr-axis-y: 0; }
-  .pr-stack[data-present-md="rails"] { --pr-in: 25%; --pr-out: 25%; --pr-dim: 0; --pr-axis-x: 1; --pr-axis-y: 0; --pr-duration: 260ms; }
+  .pr-stack[data-present-md="push"] { --pr-in: 100%; --pr-out: 32%; --pr-dim: 0.6; --pr-axis-x: 1; --pr-axis-y: 0; --pr-duration: var(--pr-push-duration, 392ms); --pr-ease: var(--pr-push-ease, var(--pr-ease-push-fallback)); }
+  .pr-stack[data-present-md="rails"] { --pr-in: 10%; --pr-out: 10%; --pr-dim: 0; --pr-axis-x: 1; --pr-axis-y: 0; --pr-duration: 240ms; --pr-ease: cubic-bezier(0.32, 0.72, 0, 1); --pr-shadow: none; }
   .pr-stack[data-present-md="drawer"] { --pr-in: 100%; --pr-out: 0%; --pr-dim: 1; --pr-axis-x: 0; --pr-axis-y: 1; }
   .pr-stack[data-present-md="fade"] { --pr-in: 0%; --pr-out: 0%; --pr-dim: 0; --pr-axis-x: 0; --pr-axis-y: 0; --pr-duration: var(--pr-fade-duration); --pr-ease: var(--pr-fade-ease); }
   .pr-stack[data-present-md="none"] { --pr-in: 0%; --pr-out: 0%; --pr-dim: 1; --pr-axis-x: 0; --pr-axis-y: 0; --pr-duration: 1ms; }
 }
 
 @media (min-width: 1024px) {
-  .pr-stack[data-present-lg="push"] { --pr-in: 100%; --pr-out: 32%; --pr-dim: 0.6; --pr-axis-x: 1; --pr-axis-y: 0; }
-  .pr-stack[data-present-lg="rails"] { --pr-in: 25%; --pr-out: 25%; --pr-dim: 0; --pr-axis-x: 1; --pr-axis-y: 0; --pr-duration: 260ms; }
+  .pr-stack[data-present-lg="push"] { --pr-in: 100%; --pr-out: 32%; --pr-dim: 0.6; --pr-axis-x: 1; --pr-axis-y: 0; --pr-duration: var(--pr-push-duration, 392ms); --pr-ease: var(--pr-push-ease, var(--pr-ease-push-fallback)); }
+  .pr-stack[data-present-lg="rails"] { --pr-in: 10%; --pr-out: 10%; --pr-dim: 0; --pr-axis-x: 1; --pr-axis-y: 0; --pr-duration: 240ms; --pr-ease: cubic-bezier(0.32, 0.72, 0, 1); --pr-shadow: none; }
   .pr-stack[data-present-lg="drawer"] { --pr-in: 100%; --pr-out: 0%; --pr-dim: 1; --pr-axis-x: 0; --pr-axis-y: 1; }
   .pr-stack[data-present-lg="fade"] { --pr-in: 0%; --pr-out: 0%; --pr-dim: 0; --pr-axis-x: 0; --pr-axis-y: 0; --pr-duration: var(--pr-fade-duration); --pr-ease: var(--pr-fade-ease); }
   .pr-stack[data-present-lg="none"] { --pr-in: 0%; --pr-out: 0%; --pr-dim: 1; --pr-axis-x: 0; --pr-axis-y: 0; --pr-duration: 1ms; }
