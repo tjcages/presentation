@@ -1,5 +1,4 @@
 import { act, render } from "@testing-library/react";
-import * as React from "react";
 import { describe, expect, it } from "vitest";
 
 import { usePresence, useLevelMemory, whenSettled } from "../_presence";
@@ -21,7 +20,7 @@ function harness<P, R>(hook: (props: P) => R, initial: P) {
   };
 }
 
-type Props = { key: string; value: string };
+interface Props { key: string; value: string }
 const presenceHarness = (initial: Props) =>
   harness<Props, Presence<string>>((p) => usePresence(p.key, p.value), initial);
 
@@ -62,7 +61,7 @@ describe("usePresence", () => {
 
     const keys = h.result.entries.map((e) => e.key);
     expect(keys).toEqual(["/b", "/a"]);
-    expect(h.result.entries[1]!.state).toBe("enter");
+    expect(h.result.entries.at(1)?.state).toBe("enter");
   });
 
   it("releases an exited entry once its animation reports back", () => {
@@ -90,7 +89,7 @@ describe("usePresence", () => {
   });
 });
 
-type MemProps = { depth: number; value: string };
+interface MemProps { depth: number; value: string }
 
 describe("useLevelMemory", () => {
   const memHarness = (initial: MemProps) =>
@@ -129,7 +128,7 @@ describe("whenSettled", () => {
 
   it("resolves when a cancelled animation rejects rather than hanging", async () => {
     const el = document.createElement("div");
-    let reject: (e: Error) => void = () => {};
+    let reject: (e: Error) => void = () => undefined;
     const pending = new Promise<void>((_, r) => {
       reject = r;
     });

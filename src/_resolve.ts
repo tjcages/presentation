@@ -110,7 +110,7 @@ function normalize(pathname: string): string {
 export function createResolver(options: ResolverOptions): Resolver {
   const root = normalize(options.root);
   const rootTitle =
-    options.title ?? humanize(root.slice(root.lastIndexOf("/") + 1)) ?? "Back";
+    options.title ?? humanize(root.slice(root.lastIndexOf("/") + 1));
   const routes = options.routes ?? [];
   const known = new Map(routes.map((r) => [normalize(r.path), r] as const));
 

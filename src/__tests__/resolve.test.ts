@@ -33,7 +33,7 @@ describe("createResolver — depth from the URL", () => {
   });
 
   it("points a deep link's back affordance up a level, not out of the area", () => {
-    expect(resolve("/settings/access/roles")!.parent).toEqual({
+    expect(resolve("/settings/access/roles")?.parent).toEqual({
       path: "/settings/access",
       title: "Access & permissions",
     });
@@ -55,11 +55,11 @@ describe("createResolver — depth from the URL", () => {
 
 describe("createResolver — titles", () => {
   it("prefers the route registry, so a rename renames the back button too", () => {
-    expect(resolve("/settings/access")!.title).toBe("Access & permissions");
+    expect(resolve("/settings/access")?.title).toBe("Access & permissions");
   });
 
   it("humanizes a path no registry claims", () => {
-    expect(resolve("/settings/audit-log")!.title).toBe("Audit log");
+    expect(resolve("/settings/audit-log")?.title).toBe("Audit log");
   });
 
   it("lets titleFor have the last word", () => {
@@ -68,8 +68,8 @@ describe("createResolver — titles", () => {
       routes: SETTINGS,
       titleFor: (p) => (p === "/settings/access" ? "Access" : undefined),
     });
-    expect(custom("/settings/access")!.title).toBe("Access");
-    expect(custom("/settings/appearance")!.title).toBe("Appearance");
+    expect(custom("/settings/access")?.title).toBe("Access");
+    expect(custom("/settings/appearance")?.title).toBe("Appearance");
   });
 
   it("humanizes dashes and underscores", () => {
@@ -80,18 +80,18 @@ describe("createResolver — titles", () => {
 
 describe("createResolver — leaf detection", () => {
   it("marks a level with nothing nested under it as a leaf", () => {
-    expect(resolve("/settings/appearance")!.leaf).toBe(true);
-    expect(resolve("/settings/access/roles")!.leaf).toBe(true);
+    expect(resolve("/settings/appearance")?.leaf).toBe(true);
+    expect(resolve("/settings/access/roles")?.leaf).toBe(true);
   });
 
   it("marks a container as not a leaf", () => {
-    expect(resolve("/settings/access")!.leaf).toBe(false);
-    expect(resolve("/settings")!.leaf).toBe(false);
+    expect(resolve("/settings/access")?.leaf).toBe(false);
+    expect(resolve("/settings")?.leaf).toBe(false);
   });
 
   it("declines to guess when given no route list", () => {
     const bare = createResolver({ root: "/settings" });
-    expect(bare("/settings/appearance")!.leaf).toBeUndefined();
+    expect(bare("/settings/appearance")?.leaf).toBeUndefined();
   });
 });
 

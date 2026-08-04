@@ -117,9 +117,9 @@ export function createBackGesture(config: BackGestureConfig): BackGesture {
     if (!last) return 0;
     let oldest = last;
     for (let i = samples.length - 1; i >= 0; i--) {
-      const s = samples[i]!;
-      if (last.t - s.t > VELOCITY_WINDOW_MS) break;
-      oldest = s;
+      const sample = samples[i];
+      if (!sample || last.t - sample.t > VELOCITY_WINDOW_MS) break;
+      oldest = sample;
     }
     // Also stale if the finger simply stopped and rested before lifting —
     // that is a deliberate placement, not a flick, and must read as zero.
@@ -177,7 +177,7 @@ export function createBackGesture(config: BackGestureConfig): BackGesture {
       // Keep the window bounded — a slow drag can otherwise run for thousands
       // of moves. Two windows' worth is plenty of history.
       const cutoff = t - VELOCITY_WINDOW_MS * 2;
-      while (samples.length > 2 && samples[0]!.t < cutoff) samples.shift();
+      while (samples.length > 2 && (samples[0]?.t ?? t) < cutoff) samples.shift();
 
       return { type: "drag", offset, progress: progressOf(offset) };
     },

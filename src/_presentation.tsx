@@ -18,12 +18,14 @@ import {
   BarSlots,
   ExitBoundary,
   NavBar,
-  PresentationProvider,
-  type PresentationContextValue,
+  PresentationProvider
+  
 } from "./_chrome";
+import type {PresentationContextValue} from "./_chrome";
 import { attachBackGesture, createBackGesture } from "./_gesture";
 import { useLevelMemory, usePresence, whenSettled } from "./_presence";
-import { resolvePresentation, type PresentSpec, type Resolver, type StackEntry } from "./_resolve";
+import { resolvePresentation    } from "./_resolve";
+import type {PresentSpec, Resolver, StackEntry} from "./_resolve";
 import { SPRINGS, springEasing } from "./_springs";
 
 export interface PresentationProps {
@@ -233,10 +235,11 @@ function useScrollMemory(path: string, direction: "forward" | "back", enabled: b
 
   React.useEffect(() => {
     if (!enabled) return;
+    const remembered = positions.current;
     // Runs on the way *out* of this path, which is the only moment its scroll
     // position is still true.
     return () => {
-      positions.current.set(path, window.scrollY);
+      remembered.set(path, window.scrollY);
     };
   }, [path, enabled]);
 
@@ -303,8 +306,12 @@ function useBackSwipe({
   onCommit: () => void;
 }) {
   const [dragging, setDragging] = React.useState(false);
+  // Held in a ref so a changed `onCommit` does not tear down and re-attach the
+  // touch listeners mid-drag.
   const commitRef = React.useRef(onCommit);
-  commitRef.current = onCommit;
+  React.useEffect(() => {
+    commitRef.current = onCommit;
+  }, [onCommit]);
 
   React.useEffect(() => {
     const stack = stackRef.current;

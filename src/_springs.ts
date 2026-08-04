@@ -85,7 +85,7 @@ export function springEasing(spring: Spring, samples = 40): SpringEasing {
   // Cut the invisible tail. Everything after the last frame that is still
   // meaningfully away from 1 is time the animation spends already arrived.
   let last = frames.length - 1;
-  while (last > 1 && Math.abs(1 - frames[last - 1]!) < VISUAL_REST) last--;
+  while (last > 1 && Math.abs(1 - (frames[last - 1] ?? 1)) < VISUAL_REST) last--;
   const visible = frames.slice(0, last + 1);
   const duration = Math.max(STEP_MS, (visible.length - 1) * STEP_MS);
 

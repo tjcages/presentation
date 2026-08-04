@@ -42,7 +42,7 @@ describe("springEasing", () => {
   it("is monotonic while overdamped — no jitter from the integrator", () => {
     const values = stops(springEasing(SPRINGS.settle).easing);
     for (let i = 1; i < values.length; i++) {
-      expect(values[i]!).toBeGreaterThanOrEqual(values[i - 1]!);
+      expect(values.at(i)).toBeGreaterThanOrEqual(values.at(i - 1) ?? 0);
     }
   });
 

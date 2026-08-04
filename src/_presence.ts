@@ -110,13 +110,19 @@ export function usePresence<T>(key: string, value: T): Presence<T> {
  */
 export function useLevelMemory<T>(depth: number, value: T): (depth: number) => T | undefined {
   const memory = React.useRef(new Map<number, T>());
-  memory.current.set(depth, value);
 
-  // Anything deeper than the current level is unreachable by a back gesture
-  // and would otherwise pin content — and its data — indefinitely.
-  for (const known of memory.current.keys()) {
-    if (known > depth) memory.current.delete(known);
-  }
+  // Recorded after the commit rather than during render: a gesture can only
+  // start once the level is on screen, so there is no window in which this is
+  // read before it has been written.
+  React.useEffect(() => {
+    const levels = memory.current;
+    levels.set(depth, value);
+    // Anything deeper than the current level is unreachable by a back gesture
+    // and would otherwise pin content — and its data — indefinitely.
+    for (const known of levels.keys()) {
+      if (known > depth) levels.delete(known);
+    }
+  }, [depth, value]);
 
   return React.useCallback((at: number) => memory.current.get(at), []);
 }
@@ -130,7 +136,10 @@ export function useLevelMemory<T>(depth: number, value: T): (depth: number) => T
  * list in exactly that case, so this resolves immediately instead.
  */
 export function whenSettled(element: Element): Promise<void> {
-  const animations = element.getAnimations?.({ subtree: true }) ?? [];
+  // Typed as optional deliberately: jsdom and older engines do not implement
+  // it, and an absent list means the same thing as an empty one.
+  const host = element as { getAnimations?: (o?: GetAnimationsOptions) => Animation[] };
+  const animations = host.getAnimations?.({ subtree: true }) ?? [];
   if (animations.length === 0) return Promise.resolve();
   return Promise.all(
     // A cancelled animation rejects; that still counts as settled.

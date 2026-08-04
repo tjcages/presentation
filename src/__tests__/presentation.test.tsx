@@ -1,5 +1,5 @@
 import { act, render, screen } from "@testing-library/react";
-import * as React from "react";
+import type * as React from "react";
 import { describe, expect, it, vi } from "vitest";
 
 import { Presentation } from "../_presentation";
@@ -19,7 +19,7 @@ const resolve = createResolver({
 
 function Stack({
   path,
-  navigate = () => {},
+  navigate = () => undefined,
   children,
   ...rest
 }: {
@@ -32,6 +32,13 @@ function Stack({
       {children}
     </Presentation>
   );
+}
+
+/** querySelector that fails the test loudly rather than yielding null. */
+function pick(root: HTMLElement, selector: string): HTMLElement {
+  const el = root.querySelector<HTMLElement>(selector);
+  if (!el) throw new Error(`nothing matched ${selector}`);
+  return el;
 }
 
 /** jsdom runs no animations, so exits settle on the next microtask. */
@@ -67,7 +74,7 @@ describe("<Presentation>", () => {
       </Stack>,
     );
     act(() => {
-      screen.getByText("Settings").closest("button")!.click();
+      screen.getByText("Settings").closest("button")?.click();
     });
     expect(navigate).toHaveBeenCalledWith("/settings");
   });
@@ -94,13 +101,13 @@ describe("<Presentation> — direction and presence", () => {
 
     view.rerender(<Stack path="/settings/appearance">appearance</Stack>);
     expect(
-      view.container.querySelector('.pr-level[data-state="enter"]')!.getAttribute("data-direction"),
+      view.container.querySelector('.pr-level[data-state="enter"]')?.getAttribute("data-direction"),
     ).toBe("forward");
     await settle();
 
     view.rerender(<Stack path="/settings">root</Stack>);
     expect(
-      view.container.querySelector('.pr-level[data-state="enter"]')!.getAttribute("data-direction"),
+      view.container.querySelector('.pr-level[data-state="enter"]')?.getAttribute("data-direction"),
     ).toBe("back");
   });
 
@@ -110,7 +117,7 @@ describe("<Presentation> — direction and presence", () => {
     view.rerender(<Stack path="/settings/access/people">people</Stack>);
     // Same depth: neither forward nor backward, so the direction is held from
     // the last real move rather than flipping the list out and back in.
-    const level = view.container.querySelector('.pr-level[data-state="enter"]')!;
+    const level = pick(view.container, '.pr-level[data-state="enter"]');
     expect(level.getAttribute("data-direction")).toBe("forward");
   });
 
@@ -118,7 +125,7 @@ describe("<Presentation> — direction and presence", () => {
     const view = render(<Stack path="/settings">root</Stack>);
     await settle();
     view.rerender(<Stack path="/settings/appearance">appearance</Stack>);
-    const leaving = view.container.querySelector('.pr-level[data-state="exit"]')!;
+    const leaving = pick(view.container, '.pr-level[data-state="exit"]');
     expect(leaving.hasAttribute("inert")).toBe(true);
   });
 });
@@ -130,7 +137,7 @@ describe("<Presentation> — presentation styles", () => {
         access
       </Stack>,
     );
-    const stack = container.querySelector(".pr-stack")!;
+    const stack = pick(container, ".pr-stack");
     expect(stack.getAttribute("data-present")).toBe("push");
     expect(stack.getAttribute("data-present-sm")).toBe("push");
     expect(stack.getAttribute("data-present-md")).toBe("rails");
@@ -149,11 +156,11 @@ describe("<Presentation> — presentation styles", () => {
 
   it("auto-drawers a leaf and auto-pushes a container", () => {
     const leaf = render(<Stack path="/settings/appearance">appearance</Stack>);
-    expect(leaf.container.querySelector(".pr-stack")!.getAttribute("data-present")).toBe("drawer");
+    expect(leaf.container.querySelector(".pr-stack")?.getAttribute("data-present")).toBe("drawer");
     leaf.unmount();
 
     const container = render(<Stack path="/settings/access">access</Stack>);
-    expect(container.container.querySelector(".pr-stack")!.getAttribute("data-present")).toBe("push");
+    expect(container.container.querySelector(".pr-stack")?.getAttribute("data-present")).toBe("push");
   });
 });
 
@@ -196,7 +203,7 @@ describe("<Presentation> — chrome declared by the page", () => {
       usePresentation();
       return null;
     }
-    const quiet = vi.spyOn(console, "error").mockImplementation(() => {});
+    const quiet = vi.spyOn(console, "error").mockImplementation(() => undefined);
     expect(() => render(<Orphan />)).toThrow(/inside a <Presentation>/);
     quiet.mockRestore();
   });

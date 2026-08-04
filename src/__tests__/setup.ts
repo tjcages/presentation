@@ -4,4 +4,4 @@
  * output readable; the hook's behaviour is asserted through the positions it
  * records, not through jsdom's scrolling.
  */
-window.scrollTo = () => {};
+window.scrollTo = () => undefined;
