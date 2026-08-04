@@ -337,6 +337,25 @@
   --pr-duration: 240ms;
 }
 
+
+/*
+ * A sibling swap at one depth moves nothing.
+ *
+ * `admin-kit` gets this by keying both rails on depth, so the same-depth case
+ * re-keys neither and there is no exit or enter at all. This stack keys on the
+ * path — it has to, because the same tree does a real push on a phone, where a
+ * lateral move is still a move. Zeroing the travel here produces the identical
+ * result on the rails side: the highlight moves, the content changes, and
+ * nothing slides.
+ */
+.pr-stack[data-present="rails"][data-same-depth] .pr-level {
+  --pr-in: 0%;
+  --pr-out: 0%;
+  --pr-dim: 1;
+  --pr-lead: 1;
+  --pr-duration: 1ms;
+}
+
 /* ── Breakpoints ────────────────────────────────────────────────────────── */
 
 /*
@@ -381,6 +400,24 @@
     --pr-out: 10%;
     --pr-duration: 240ms;
   }
+
+  /*
+   * A sibling swap at one depth moves nothing.
+   *
+   * `admin-kit` gets this by keying both rails on depth, so the same-depth case
+   * re-keys neither and there is no exit or enter at all. This stack keys on the
+   * path — it has to, because the same tree does a real push on a phone, where a
+   * lateral move is still a move. Zeroing the travel here produces the identical
+   * result on the rails side: the highlight moves, the content changes, and
+   * nothing slides.
+   */
+  .pr-stack[data-present-sm="rails"][data-same-depth] .pr-level {
+    --pr-in: 0%;
+    --pr-out: 0%;
+    --pr-dim: 1;
+    --pr-lead: 1;
+    --pr-duration: 1ms;
+  }
 }
 
 @media (min-width: 768px) {
@@ -420,6 +457,24 @@
     --pr-out: 10%;
     --pr-duration: 240ms;
   }
+
+  /*
+   * A sibling swap at one depth moves nothing.
+   *
+   * `admin-kit` gets this by keying both rails on depth, so the same-depth case
+   * re-keys neither and there is no exit or enter at all. This stack keys on the
+   * path — it has to, because the same tree does a real push on a phone, where a
+   * lateral move is still a move. Zeroing the travel here produces the identical
+   * result on the rails side: the highlight moves, the content changes, and
+   * nothing slides.
+   */
+  .pr-stack[data-present-md="rails"][data-same-depth] .pr-level {
+    --pr-in: 0%;
+    --pr-out: 0%;
+    --pr-dim: 1;
+    --pr-lead: 1;
+    --pr-duration: 1ms;
+  }
 }
 
 @media (min-width: 1024px) {
@@ -458,6 +513,24 @@
     --pr-in: 10%;
     --pr-out: 10%;
     --pr-duration: 240ms;
+  }
+
+  /*
+   * A sibling swap at one depth moves nothing.
+   *
+   * `admin-kit` gets this by keying both rails on depth, so the same-depth case
+   * re-keys neither and there is no exit or enter at all. This stack keys on the
+   * path — it has to, because the same tree does a real push on a phone, where a
+   * lateral move is still a move. Zeroing the travel here produces the identical
+   * result on the rails side: the highlight moves, the content changes, and
+   * nothing slides.
+   */
+  .pr-stack[data-present-lg="rails"][data-same-depth] .pr-level {
+    --pr-in: 0%;
+    --pr-out: 0%;
+    --pr-dim: 1;
+    --pr-lead: 1;
+    --pr-duration: 1ms;
   }
 }
 

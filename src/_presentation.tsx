@@ -95,18 +95,42 @@ export function Presentation({
   // Push or pop, decided during render. The direction has to be known on the
   // same render that swaps the key — an effect runs a frame later, by which
   // time the arriving level has already painted where it was going.
-  const [track, setTrack] = React.useState({ depth, dir: 1 });
-  const dir = depth === track.depth ? track.dir : depth > track.depth ? 1 : -1;
-  if (depth !== track.depth) setTrack({ depth, dir });
+  const [track, setTrack] = React.useState({
+    path,
+    depth,
+    dir: 1,
+    sameDepth: false,
+  });
+  const moved = path !== track.path;
+  /**
+   * A move between siblings at one depth.
+   *
+   * `admin-kit` keys both rails `level-${depth}`, so this re-keys neither and
+   * nothing animates — the list highlight and the page content just change in
+   * place. Re-animating a level you never left reads as a glitch. Tracked here
+   * rather than expressed as a key, because the same tree has to keep doing a
+   * real push on a phone; which of the two applies is a breakpoint question,
+   * and breakpoints are settled in CSS.
+   */
+  const sameDepth = moved ? depth === track.depth : track.sameDepth;
+  const dir = moved
+    ? depth === track.depth
+      ? track.dir
+      : depth > track.depth
+        ? 1
+        : -1
+    : track.dir;
+  if (moved) setTrack({ path, depth, dir, sameDepth });
   const direction = dir >= 0 ? "forward" : "back";
 
   const { entries, release } = usePresence(path, children);
   const recall = useLevelMemory(depth, children);
 
-  // The rail is its own presence, keyed by depth rather than path: siblings at
-  // one depth share a list, and re-animating a list you are still standing in
-  // reads as a glitch. The pane keeps its path key, so it does move on a
-  // sibling swap — the content genuinely changed.
+  // The rail is its own presence, keyed by depth: siblings at one depth share
+  // a list, so this re-keys nothing and the list is left alone — only the
+  // highlight inside it moves. The pane is keyed by path because a phone still
+  // has to push laterally; on the rails side `data-same-depth` zeroes its
+  // travel so it lands in the same place admin-kit does.
   const railNode = rail && entry ? rail(entry) : null;
   const railPresence = usePresence(`depth-${depth}`, railNode);
 
@@ -147,6 +171,7 @@ export function Presentation({
         data-present-md={styles.md}
         data-present-lg={styles.lg}
         data-depth={depth}
+        data-same-depth={sameDepth ? "" : undefined}
         // The push spring lives in `_springs.ts`. It is published under its own
         // names rather than as `--pr-duration`/`--pr-ease` directly: an inline
         // declaration outranks every stylesheet rule, so writing the generic

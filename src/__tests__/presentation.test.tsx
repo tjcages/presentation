@@ -111,14 +111,32 @@ describe("<Presentation> — direction and presence", () => {
     ).toBe("back");
   });
 
-  it("does not re-animate a same-depth sibling swap as a push", async () => {
+  it("flags a same-depth sibling swap so the rails presentation stays still", async () => {
+    // admin-kit keys both rails on depth, so a lateral move re-keys neither and
+    // nothing animates. This stack keys the pane on the path — a phone still
+    // pushes laterally — so the same-depth case is flagged instead, and the
+    // rails breakpoints zero its travel. Losing this flag silently reintroduces
+    // a slide the admin app has never had.
     const view = render(<Stack path="/settings/access/roles">roles</Stack>);
     await settle();
     view.rerender(<Stack path="/settings/access/people">people</Stack>);
-    // Same depth: neither forward nor backward, so the direction is held from
-    // the last real move rather than flipping the list out and back in.
-    const level = pick(view.container, '.pr-level[data-state="enter"]');
-    expect(level.getAttribute("data-direction")).toBe("forward");
+
+    const stack = pick(view.container, ".pr-stack");
+    expect(stack.hasAttribute("data-same-depth")).toBe(true);
+    // Direction is held from the last real move rather than flipping.
+    expect(
+      pick(view.container, '.pr-level[data-state="enter"]').getAttribute("data-direction"),
+    ).toBe("forward");
+  });
+
+  it("does not flag a real push or pop", async () => {
+    const view = render(<Stack path="/settings/access">access</Stack>);
+    await settle();
+    view.rerender(<Stack path="/settings/access/roles">roles</Stack>);
+    expect(pick(view.container, ".pr-stack").hasAttribute("data-same-depth")).toBe(false);
+    await settle();
+    view.rerender(<Stack path="/settings/access">access</Stack>);
+    expect(pick(view.container, ".pr-stack").hasAttribute("data-same-depth")).toBe(false);
   });
 
   it("makes the departing level inert so it cannot take focus or clicks", async () => {
