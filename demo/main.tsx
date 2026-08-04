@@ -1,9 +1,8 @@
 /**
  * A demo whose only job is to make the design claims falsifiable.
  *
- * Every screen here exists to stress one of them: a nested horizontal
- * scroller for the `touch-action` claim, a long list for scroll restoration,
- * a long-to-short push for the height pin, a leaf for `auto` → drawer. The
+ * The sidebar is Totem admin's settings sidebar, reproduced class-for-class in
+ * `sidebar.tsx`. The routes match `SETTINGS_NAV` and `ACCESS_SECTIONS`. The
  * router is twenty lines of `history.pushState` — which is the point, since a
  * package that claims to be router-free should be provable against the
  * smallest possible one.
@@ -11,6 +10,7 @@
 
 import * as React from "react";
 import { createRoot } from "react-dom/client";
+import { ChevronLeft } from "@untitledui/icons";
 
 import {
   Actions,
@@ -23,6 +23,8 @@ import {
 } from "@tjcages/presentation";
 import "@tjcages/presentation/presentation.css";
 import "./demo.css";
+
+import { AccessRail, SettingsRail, type RailLinkProps } from "./sidebar";
 
 /* ── The smallest router that could possibly work ────────────────────────── */
 
@@ -43,24 +45,21 @@ function useLocation(): [string, (path: string) => void] {
   return [path, navigate];
 }
 
-const NavigateContext = React.createContext<(path: string) => void>(() => {});
+const NavigateContext = React.createContext<(path: string) => void>(() => undefined);
 
 function Link({
   href,
   className,
   children,
   onClick,
-}: {
-  href: string;
-  className?: string;
-  children: React.ReactNode;
-  onClick?: (e: React.MouseEvent) => void;
-}) {
+  ...rest
+}: RailLinkProps & { onClick?: (e: React.MouseEvent) => void }) {
   const navigate = React.useContext(NavigateContext);
   return (
     <a
       href={href}
       className={className}
+      {...rest}
       onClick={(e) => {
         onClick?.(e);
         if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey) return;
@@ -73,25 +72,22 @@ function Link({
   );
 }
 
-/* ── The route table ─────────────────────────────────────────────────────── */
+/* ── Routes, matching the app's settings nav ─────────────────────────────── */
 
 const ROUTES = [
-  { path: "/settings" },
+  { path: "/settings", title: "General" },
   { path: "/settings/appearance", title: "Appearance" },
-  { path: "/settings/long", title: "A very long page" },
-  { path: "/settings/short", title: "A very short page" },
-  { path: "/settings/notifications", title: "Notifications" },
-  { path: "/settings/access", title: "Access & permissions" },
+  { path: "/settings/navigation", title: "Navigation" },
+  { path: "/settings/access", title: "Access" },
   { path: "/settings/access/people", title: "People" },
   { path: "/settings/access/roles", title: "Roles" },
   { path: "/settings/access/activity", title: "Activity" },
+  { path: "/settings/pricing", title: "Pricing" },
+  { path: "/settings/models", title: "Models" },
+  { path: "/settings/integrations", title: "Integrations" },
 ];
 
-const resolve = createResolver({
-  root: "/settings",
-  title: "Settings",
-  routes: ROUTES,
-});
+const resolve = createResolver({ root: "/settings", title: "Settings", routes: ROUTES });
 
 /* ── Screens ─────────────────────────────────────────────────────────────── */
 
@@ -109,43 +105,27 @@ function Row({ to, label, note }: { to: string; label: string; note?: string }) 
   );
 }
 
-function Index() {
+function Simple({ title, lede }: { title: string; lede: string }) {
   return (
     <div className="page">
-      <h1>Settings</h1>
-      <p className="lede">
-        Each row below exercises one claim. Open it on a phone and drag from the
-        left edge.
-      </p>
-      <div className="group">
-        <Row to="/settings/access" label="Access & permissions" note="A container — pushes, so back means “up one”" />
-        <Row to="/settings/appearance" label="Appearance" note="A leaf — auto presents it as a drawer" />
-      </div>
-      <div className="group">
-        <Row to="/settings/long" label="A very long page" note="Scroll it, go back, come back — position is restored" />
-        <Row to="/settings/short" label="A very short page" note="Push here from the long page: the height must not snap" />
-        <Row to="/settings/notifications" label="Notifications" note="Page-declared title and actions" />
-      </div>
+      <h2>{title}</h2>
+      <p className="lede">{lede}</p>
     </div>
   );
 }
 
-function Appearance() {
+function General() {
   return (
     <div className="page">
-      <h2>Appearance</h2>
+      <h1>General</h1>
       <p className="lede">
-        Nothing is nested under this path, so <code>present="auto"</code>{" "}
-        resolves it to a drawer — it rises from the bottom edge rather than
-        pushing sideways.
+        The settings root. On a phone this level is the list; on desktop the
+        rail is, so this is just the first page.
       </p>
       <div className="group">
-        {["System", "Light", "Dark"].map((t) => (
-          <label key={t} className="row">
-            <span><strong>{t}</strong></span>
-            <input type="radio" name="theme" defaultChecked={t === "System"} />
-          </label>
-        ))}
+        <Row to="/settings/access" label="Access" note="Pushes a second rail level" />
+        <Row to="/settings/pricing" label="Pricing" />
+        <Row to="/settings/integrations" label="Integrations" />
       </div>
     </div>
   );
@@ -154,10 +134,11 @@ function Appearance() {
 function Access() {
   return (
     <div className="page">
-      <h2>Access &amp; permissions</h2>
+      <h2>Access</h2>
       <p className="lede">
-        A container: it has levels beneath it, so it pushes. Its back button
-        goes up to Settings rather than closing the section.
+        A container. Opening one of its views pushes a second rail level — the
+        rail becomes People / Roles / Activity and the pane follows, 25% against
+        10%.
       </p>
       <div className="group">
         <Row to="/settings/access/people" label="People" note="A long list — scroll it, drill in, come back" />
@@ -211,9 +192,7 @@ function Roles() {
         </table>
       </div>
 
-      <p className="lede">
-        A second scroller, of cards, in case the table is too easy:
-      </p>
+      <p className="lede">A second scroller, of cards, in case the table is too easy:</p>
       <div className="carousel">
         {Array.from({ length: 12 }, (_, i) => (
           <div key={i} className="card">Card {i + 1}</div>
@@ -263,51 +242,38 @@ function Activity() {
   );
 }
 
-function LongPage() {
+function Pricing() {
   return (
     <div className="page">
-      <h2>A very long page</h2>
+      <h2>Pricing</h2>
       <p className="lede">
-        <strong>The height-pin test.</strong> Scroll to the bottom, then open the
-        short page below. The document must not collapse mid-animation and
-        lurch the scroll position.
+        <strong>The height-pin test.</strong> Scroll to the bottom, then open
+        Models — a much shorter page. The document must not collapse
+        mid-animation and lurch the scroll position.
       </p>
       <div className="group">
         {Array.from({ length: 50 }, (_, i) => (
-          <div key={i} className="row"><span><strong>Row {i + 1}</strong></span></div>
+          <div key={i} className="row"><span><strong>Rate {i + 1}</strong></span></div>
         ))}
       </div>
-      <Row to="/settings/short" label="Push to the short page" note="From the very bottom" />
+      <Row to="/settings/models" label="Open Models" note="From the very bottom" />
     </div>
   );
 }
 
-function ShortPage() {
-  return (
-    <div className="page">
-      <h2>A very short page</h2>
-      <p className="lede">That’s all there is.</p>
-    </div>
-  );
-}
-
-function Notifications() {
+function Integrations() {
   const { dismiss, depth } = usePresentation();
-  const [saved, setSaved] = React.useState(false);
   return (
     <div className="page">
       <Title>Unsaved changes</Title>
       <Actions>
-        <button type="button" className="btn" onClick={() => { setSaved(true); dismiss(); }}>
-          Done
-        </button>
+        <button type="button" className="btn" onClick={dismiss}>Done</button>
       </Actions>
-      <h2>Notifications</h2>
+      <h2>Integrations</h2>
       <p className="lede">
         The bar’s title and its “Done” button are declared by <em>this page</em>,
-        portalled up into the chrome — the resolver’s title (“Notifications”) is
-        still in the DOM underneath, hidden by CSS once it has company.
-        <code>usePresentation()</code> reports depth {depth}.{saved ? " Saved." : ""}
+        portalled up into the chrome. <code>usePresentation()</code> reports
+        depth {depth}.
       </p>
     </div>
   );
@@ -315,85 +281,36 @@ function Notifications() {
 
 function Screen({ path }: { path: string }) {
   switch (path) {
-    case "/settings": return <Index />;
-    case "/settings/appearance": return <Appearance />;
+    case "/settings": return <General />;
+    case "/settings/appearance": return <Simple title="Appearance" lede="Theme." />;
+    case "/settings/navigation": return <Simple title="Navigation" lede="Sidebar favorites & recents." />;
     case "/settings/access": return <Access />;
     case "/settings/access/people": return <People />;
     case "/settings/access/roles": return <Roles />;
     case "/settings/access/activity": return <Activity />;
-    case "/settings/long": return <LongPage />;
-    case "/settings/short": return <ShortPage />;
-    case "/settings/notifications": return <Notifications />;
+    case "/settings/pricing": return <Pricing />;
+    case "/settings/models": return <Simple title="Models" lede="Which model the CRM agent uses." />;
+    case "/settings/integrations": return <Integrations />;
     default: return <div className="page"><h2>Not found</h2></div>;
   }
 }
 
 /* ── Harness ─────────────────────────────────────────────────────────────── */
 
-const CATEGORIES = [
-  { to: "/settings/access", label: "Access & permissions" },
-  { to: "/settings/appearance", label: "Appearance" },
-  { to: "/settings/long", label: "A very long page" },
-  { to: "/settings/short", label: "A very short page" },
-  { to: "/settings/notifications", label: "Notifications" },
-];
-
-const ACCESS_VIEWS = [
-  { to: "/settings/access/people", label: "People" },
-  { to: "/settings/access/roles", label: "Roles" },
-  { to: "/settings/access/activity", label: "Activity" },
-];
-
-function RailItem({ to, label, path }: { to: string; label: string; path: string }) {
-  return (
-    <Link href={to} className={`rail-item${path.startsWith(to) ? " is-active" : ""}`}>
-      {label}
-    </Link>
-  );
-}
-
 /**
- * Rail content for the current level.
- *
- * This is the half that was missing: at depth 2 the rail is a *different list*
- * — the views inside Access — and it slides in as the pane does, 25% against
- * the pane's 10%. A rail that never changes and never moves is not the
- * two-rail presentation, it is a static sidebar next to an animating page.
- *
- * Mirrors how admin swaps `SettingsNav` for `SectionLevelNav`.
+ * `admin-kit`'s NavStack renders its back affordance at the top of the left
+ * rail on any pushed level. Same classes, same chevron.
  */
-function RailContent({ entry, path }: { entry: StackEntry; path: string }) {
-  const inAccess = entry.depth >= 2 && path.startsWith("/settings/access/");
-
-  if (inAccess) {
-    return (
-      <>
-        <Link href="/settings/access" className="rail-back">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden>
-            <path d="M15 18l-6-6 6-6" />
-          </svg>
-          Access &amp; permissions
-        </Link>
-        <div className="rail-group">
-          {ACCESS_VIEWS.map((item) => (
-            <RailItem key={item.to} {...item} path={path} />
-          ))}
-        </div>
-      </>
-    );
-  }
-
+function RailBack({ label, onClick }: { label: string; onClick: () => void }) {
   return (
-    <>
-      <Link href="/settings" className={`rail-title${path === "/settings" ? " is-active" : ""}`}>
-        Settings
-      </Link>
-      <div className="rail-group">
-        {CATEGORIES.map((item) => (
-          <RailItem key={item.to} {...item} path={path} />
-        ))}
-      </div>
-    </>
+    <button
+      type="button"
+      onClick={onClick}
+      className="text-foreground-300 hover:text-foreground-100 -ml-1 mb-3 inline-flex w-full min-w-0 items-center gap-1 rounded-md px-1 py-1 text-sm font-medium transition-colors"
+    >
+      <ChevronLeft className="size-4 shrink-0" />
+      <span className="truncate text-left">{label}</span>
+    </button>
   );
 }
 
@@ -402,7 +319,6 @@ const PRESETS: { label: string; value: PresentSpec }[] = [
   { label: "rails everywhere", value: "rails" },
   { label: "push everywhere", value: "push" },
   { label: "push · fade at md", value: { base: "push", md: "fade" } },
-  { label: "drawer (explicit, unfinished)", value: "drawer" },
 ];
 
 function App() {
@@ -415,6 +331,26 @@ function App() {
 
   const entry = resolve(path);
   const spec = PRESETS[preset]?.value ?? "push";
+
+  /**
+   * Rail content per level, mirroring how `_app-chrome.tsx` builds
+   * `sidebarScreens`: the settings categories, and — once inside a settings
+   * sub-level — that level's sibling views under a back affordance.
+   */
+  const rail = React.useCallback(
+    (e: StackEntry) => {
+      if (e.depth >= 2 && path.startsWith("/settings/access/")) {
+        return (
+          <>
+            <RailBack label="Access" onClick={() => navigate("/settings/access")} />
+            <AccessRail pathname={path} Link={Link} />
+          </>
+        );
+      }
+      return <SettingsRail pathname={path} Link={Link} />;
+    },
+    [path, navigate],
+  );
 
   return (
     <NavigateContext.Provider value={navigate}>
@@ -438,7 +374,7 @@ function App() {
         resolve={resolve}
         present={spec}
         Link={Link}
-        rail={(e) => <RailContent entry={e} path={path} />}
+        rail={rail}
       >
         <Screen path={path} />
       </Presentation>
@@ -446,7 +382,12 @@ function App() {
   );
 }
 
-createRoot(document.getElementById("root")!).render(
+// Cached across hot reloads; a second `createRoot` on the same container warns
+// and mounts a competing tree.
+const container = document.getElementById("root")!;
+const store = window as unknown as { __demoRoot?: ReturnType<typeof createRoot> };
+store.__demoRoot ??= createRoot(container);
+store.__demoRoot.render(
   <React.StrictMode>
     <App />
   </React.StrictMode>,

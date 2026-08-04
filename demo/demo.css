@@ -1,53 +1,103 @@
-/* Demo chrome only. Nothing here is part of the package. */
+@import "tailwindcss";
 
-:root {
-  --bg: #fff;
-  --fg: #101012;
-  --muted: #6b6b74;
-  --line: #e6e6ea;
-  --accent: #0a68ff;
-  --surface: #fff;
-  --raised: #f6f6f8;
-  color-scheme: light dark;
+/**
+ * Totem's theme tokens, copied from `packages/brand/src/tokens.css` with the
+ * neutral scale already resolved. Values, not approximations — the sidebar is
+ * being matched exactly, and a hand-picked grey would defeat that.
+ */
+@theme {
+  --color-accent-100: #2447de;
+
+  --color-background-100: #ffffff;
+  --color-background-200: #fafafa;
+  --color-foreground-100: #292929;
+  --color-foreground-300: #999999;
+  --color-border-100: #f0f0f0;
+  --color-canvas: #fafafa;
+
+  --color-sidebar-foreground: #292929;
+  --color-sidebar-accent: #ececec;
+  --color-sidebar-accent-foreground: #292929;
+  --color-sidebar-border: #fafafa;
+  --color-sidebar-ring: #999999;
+  --color-ring: #2447de;
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0b0b0d;
-    --fg: #f2f2f5;
-    --muted: #9a9aa4;
-    --line: #26262c;
-    --accent: #5c9dff;
-    --surface: #131317;
-    --raised: #1b1b21;
+  @theme {
+    --color-background-100: #1c1c1c;
+    --color-background-200: #242424;
+    --color-foreground-100: #f2f2f2;
+    --color-foreground-300: #6e6e6e;
+    --color-border-100: #333333;
+    --color-canvas: #121212;
+
+    --color-sidebar-foreground: #f2f2f2;
+    --color-sidebar-accent: #262626;
+    --color-sidebar-accent-foreground: #f2f2f2;
+    --color-sidebar-ring: #6e6e6e;
   }
 }
 
-* { box-sizing: border-box; }
-
-html, body {
+/*
+ * The root keeps its 16px font-size. Tailwind's spacing, radii and type scales
+ * are all in rem, so shrinking the root shrinks every one of them — a 14px
+ * root silently renders the whole sidebar at 87.5%: `rounded-lg` at 7px,
+ * `text-sm` at 12.25px, `size-4` icons at 14px. The body's own size is set in
+ * px, which does not move the rem basis.
+ */
+body {
   margin: 0;
-  background: var(--bg);
-  color: var(--fg);
-  font: 15px/1.5 ui-sans-serif, -apple-system, "SF Pro Text", system-ui, sans-serif;
+  background: var(--color-canvas);
+  color: var(--color-foreground-100);
+  font-family: ui-sans-serif, -apple-system, "SF Pro Text", system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
 
-/* Hand the package its surface colour so the bar's blur has something to blur. */
+* {
+  box-sizing: border-box;
+}
+
+/* ── The stack's own surfaces, bound to the theme ───────────────────────── */
+
 .pr-stack {
-  --pr-surface: var(--surface);
+  --pr-surface: var(--color-background-100);
   --pr-backdrop: rgb(0 0 0 / 0.18);
+  --pr-rail-width: 244px;
+  --pr-rail-gap: 0px;
+  --pr-rail-top: 41px;
   min-height: 100dvh;
-  background: var(--bg);
+  background: var(--color-canvas);
+}
+
+.pr-rail {
+  padding: 8px;
+}
+
+@media (min-width: 768px) {
+  .pr-rail {
+    border-right: 1px solid var(--color-border-100);
+  }
+
+  /* The rail shows the same levels, so the mobile bar would duplicate it. */
+  .pr-bar {
+    display: none;
+  }
 }
 
 .pr-bar {
-  border-bottom: 1px solid var(--line);
-  color: var(--fg);
+  border-bottom: 1px solid var(--color-border-100);
+  color: var(--color-foreground-100);
 }
 
-.pr-bar-back { color: var(--accent); font-weight: 500; }
-.pr-bar-title { font-size: 15px; }
+.pr-bar-back {
+  color: var(--color-accent-100);
+  font-weight: 500;
+}
+
+/* ── Demo chrome. Nothing below is part of the package or the app. ──────── */
 
 .chrome {
   position: sticky;
@@ -57,38 +107,69 @@ html, body {
   align-items: center;
   gap: 10px;
   padding: 8px 12px;
-  background: var(--raised);
-  border-bottom: 1px solid var(--line);
+  background: var(--color-background-200);
+  border-bottom: 1px solid var(--color-border-100);
   font-size: 12px;
 }
 
-.chrome .brand { font-weight: 500; }
+.chrome .brand {
+  font-weight: 500;
+}
+
 .chrome select {
   font: inherit;
   padding: 4px 6px;
   border-radius: 6px;
-  border: 1px solid var(--line);
-  background: var(--surface);
+  border: 1px solid var(--color-border-100);
+  background: var(--color-background-100);
   color: inherit;
 }
-.chrome .hud { margin-left: auto; color: var(--muted); }
 
-/* The bar is sticky under the demo's own sticky header. */
-.pr-bar { top: 37px; }
+.chrome .hud {
+  margin-left: auto;
+  color: var(--color-foreground-300);
+}
 
-.page { padding: 16px 16px 48px; }
+.page {
+  padding: 16px 16px 48px;
+}
 
-h1 { font-size: 26px; margin: 8px 0 4px; font-weight: 500; }
-h2 { font-size: 20px; margin: 8px 0 4px; font-weight: 500; }
+@media (min-width: 768px) {
+  .page {
+    padding: 24px 28px 64px;
+    max-width: 860px;
+  }
+}
 
-.lede { color: var(--muted); margin: 0 0 16px; max-width: 60ch; }
-.lede code { background: var(--raised); padding: 1px 4px; border-radius: 4px; }
+h1 {
+  font-size: 26px;
+  margin: 8px 0 4px;
+  font-weight: 500;
+}
+
+h2 {
+  font-size: 20px;
+  margin: 8px 0 4px;
+  font-weight: 500;
+}
+
+.lede {
+  color: var(--color-foreground-300);
+  margin: 0 0 16px;
+  max-width: 60ch;
+}
+
+.lede code {
+  background: var(--color-background-200);
+  padding: 1px 4px;
+  border-radius: 4px;
+}
 
 .group {
-  border: 1px solid var(--line);
+  border: 1px solid var(--color-border-100);
   border-radius: 12px;
   overflow: hidden;
-  background: var(--surface);
+  background: var(--color-background-100);
   margin-bottom: 20px;
 }
 
@@ -101,26 +182,48 @@ h2 { font-size: 20px; margin: 8px 0 4px; font-weight: 500; }
   padding: 10px 14px;
   color: inherit;
   text-decoration: none;
-  border-bottom: 1px solid var(--line);
+  border-bottom: 1px solid var(--color-border-100);
 }
 
-.row:last-child { border-bottom: 0; }
-.row:active { background: var(--raised); }
-.row span { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.row small { color: var(--muted); font-size: 12px; }
-.row svg { color: var(--muted); flex: none; }
+.row:last-child {
+  border-bottom: 0;
+}
+
+.row:active {
+  background: var(--color-background-200);
+}
+
+.row span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.row small {
+  color: var(--color-foreground-300);
+  font-size: 12px;
+}
+
+.row svg {
+  color: var(--color-foreground-300);
+  flex: none;
+}
 
 .btn {
   font: inherit;
   font-size: 13px;
   padding: 6px 10px;
   border-radius: 8px;
-  border: 1px solid var(--line);
-  background: var(--surface);
-  color: var(--accent);
+  border: 1px solid var(--color-border-100);
+  background: var(--color-background-100);
+  color: var(--color-accent-100);
   cursor: pointer;
 }
-.btn:active { opacity: 0.6; }
+
+.btn:active {
+  opacity: 0.6;
+}
 
 /* ── The nested horizontal scrollers the gesture must not break ─────────── */
 
@@ -128,16 +231,37 @@ h2 { font-size: 20px; margin: 8px 0 4px; font-weight: 500; }
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-x: contain;
-  border: 1px solid var(--line);
+  border: 1px solid var(--color-border-100);
   border-radius: 12px;
   margin-bottom: 20px;
-  background: var(--surface);
+  background: var(--color-background-100);
 }
 
-.matrix table { border-collapse: collapse; min-width: 640px; font-size: 13px; }
-.matrix th, .matrix td { padding: 8px 12px; border-bottom: 1px solid var(--line); text-align: center; white-space: nowrap; }
-.matrix thead th { position: sticky; top: 0; background: var(--raised); font-weight: 500; }
-.matrix th[scope="row"] { text-align: left; font-weight: 400; }
+.matrix table {
+  border-collapse: collapse;
+  min-width: 640px;
+  font-size: 13px;
+}
+
+.matrix th,
+.matrix td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--color-border-100);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.matrix thead th {
+  position: sticky;
+  top: 0;
+  background: var(--color-background-200);
+  font-weight: 500;
+}
+
+.matrix th[scope="row"] {
+  text-align: left;
+  font-weight: 400;
+}
 
 .carousel {
   display: flex;
@@ -146,8 +270,6 @@ h2 { font-size: 20px; margin: 8px 0 4px; font-weight: 500; }
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-x: contain;
   padding-bottom: 8px;
-  /* Horizontal padding belongs on the content, not the frame, or the last
-     card clips at the edge while scrolling. */
   padding-inline: 2px;
 }
 
@@ -157,76 +279,8 @@ h2 { font-size: 20px; margin: 8px 0 4px; font-weight: 500; }
   height: 80px;
   display: grid;
   place-items: center;
-  border: 1px solid var(--line);
+  border: 1px solid var(--color-border-100);
   border-radius: 10px;
-  background: var(--surface);
+  background: var(--color-background-100);
   font-size: 13px;
-}
-
-/* ── Rail ───────────────────────────────────────────────────────────────── */
-
-/* Layout and motion belong to the package; this is only what it looks like. */
-.pr-stack {
-  --pr-rail-width: 232px;
-  --pr-rail-gap: 32px;
-  --pr-rail-top: 53px;
-}
-
-.pr-rail {
-  padding: 16px 8px 16px 12px;
-}
-
-.rail-group {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin-top: 10px;
-}
-
-.rail-title,
-.rail-item,
-.rail-back {
-  display: block;
-  padding: 7px 10px;
-  border-radius: 8px;
-  color: var(--muted);
-  text-decoration: none;
-  font-size: 13px;
-}
-
-.rail-title {
-  font-size: 15px;
-  font-weight: 500;
-  color: var(--fg);
-}
-
-.rail-back {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  color: var(--accent);
-  font-weight: 500;
-}
-
-.rail-item:hover,
-.rail-back:hover {
-  background: var(--raised);
-}
-
-.rail-item.is-active {
-  background: var(--raised);
-  color: var(--fg);
-  font-weight: 500;
-}
-
-@media (min-width: 768px) {
-  /* The rail shows the same levels, so the mobile bar would duplicate it. */
-  .pr-bar {
-    display: none;
-  }
-
-  .page {
-    padding: 24px 8px 64px;
-    max-width: 860px;
-  }
 }
