@@ -74,6 +74,17 @@ describe("<Presentation>", () => {
     expect(screen.getByText("Access")).toBeTruthy();
   });
 
+  it("never renders a back link pointing at the page it is on", () => {
+    for (const path of ["/settings/appearance", "/settings/access", "/settings/access/roles"]) {
+      const view = render(<Stack path={path}>page</Stack>);
+      const back = view.container.querySelector(".pr-bar-back");
+      if (back) {
+        expect(back.getAttribute("href"), `${path} back points at itself`).not.toBe(path);
+      }
+      view.unmount();
+    }
+  });
+
   it("navigates to the parent when back is pressed", () => {
     const navigate = vi.fn();
     render(

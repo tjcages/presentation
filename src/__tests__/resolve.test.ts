@@ -53,6 +53,35 @@ describe("createResolver — depth from the URL", () => {
   });
 });
 
+describe("createResolver — a way out is a way out", () => {
+  /**
+   * A back affordance that points at the page it is on is not a back
+   * affordance. It renders, it looks live, and pressing it does nothing —
+   * which is worse than having none at all, because it costs a press to learn.
+   */
+  it("never gives a level itself as its parent", () => {
+    for (const route of SETTINGS) {
+      const entry = resolve(route.path);
+      expect(entry, route.path).toBeTruthy();
+      expect(entry?.parent?.path, `${route.path} points back at itself`).not.toBe(
+        entry?.path,
+      );
+    }
+  });
+
+  it("gives every level below the root a parent that is a known route", () => {
+    const known = new Set(SETTINGS.map((r) => r.path));
+    for (const route of SETTINGS) {
+      const entry = resolve(route.path);
+      if (!entry?.parent) {
+        expect(entry?.path, "only the root may lack a parent").toBe("/settings");
+        continue;
+      }
+      expect(known.has(entry.parent.path), `${route.path} -> ${entry.parent.path}`).toBe(true);
+    }
+  });
+});
+
 describe("createResolver — titles", () => {
   it("prefers the route registry, so a rename renames the back button too", () => {
     expect(resolve("/settings/access")?.title).toBe("Access & permissions");

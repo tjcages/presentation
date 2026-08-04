@@ -354,7 +354,14 @@ function App() {
       if (e.level >= 1) {
         return (
           <>
-            <RailBack label="Access" onClick={() => navigate("/settings/access")} />
+            {/*
+              * The back affordance names where it *goes*, not where it is —
+              * admin's `sidebarBackLabel: "Settings"` with
+              * `router.push("/settings")`. Labelling it with the current
+              * level's own title and pointing it at the current level's own
+              * path makes it a no-op that claims to be a way out.
+              */}
+            <RailBack label="Settings" onClick={() => navigate("/settings")} />
             <AccessRail pathname={path} Link={Link} />
           </>
         );
