@@ -87,7 +87,19 @@ const ROUTES = [
   { path: "/settings/integrations", title: "Integrations" },
 ];
 
-const resolve = createResolver({ root: "/settings", title: "Settings", routes: ROUTES });
+/**
+ * `subLevels` mirrors `SETTINGS_SUB_LEVELS`: Access is the only settings row
+ * that pushes a rail level of its own. Every other row — General, Appearance,
+ * Navigation, Pricing, Models, Integrations — is one entry in a single list,
+ * so moving between them leaves the sidebar completely alone, however many URL
+ * segments deep each one happens to be.
+ */
+const resolve = createResolver({
+  root: "/settings",
+  title: "Settings",
+  routes: ROUTES,
+  subLevels: [{ basePath: "/settings/access", title: "Access" }],
+});
 
 /* ── Screens ─────────────────────────────────────────────────────────────── */
 
@@ -339,7 +351,7 @@ function App() {
    */
   const rail = React.useCallback(
     (e: StackEntry) => {
-      if (e.depth >= 2 && path.startsWith("/settings/access/")) {
+      if (e.level >= 1) {
         return (
           <>
             <RailBack label="Access" onClick={() => navigate("/settings/access")} />

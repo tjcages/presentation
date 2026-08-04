@@ -53,8 +53,25 @@ export interface StackLevel {
 }
 
 export interface StackEntry extends StackLevel {
-  /** 0 is the root of the stack, not of the site. */
+  /**
+   * URL depth — how many segments below the root this path sits.
+   *
+   * Drives the phone's push, where every settings page is its own screen and
+   * `/settings/appearance` really is one level above `/settings`.
+   */
   depth: number;
+  /**
+   * Navigation depth — how many *rail levels* deep this path sits.
+   *
+   * Not the same number, and conflating them is the whole reason a sidebar
+   * animates when it should not. In a settings area, `/settings` and
+   * `/settings/appearance` are two rows of one list: different URL depths, the
+   * same rail level, so moving between them must leave the rail alone. Only a
+   * path inside a declared sub-level (`subLevels`) is a level deeper.
+   *
+   * Falls back to `depth` when the host declares no sub-levels.
+   */
+  level: number;
   /** The level this one was pushed from. Absent at the root. */
   parent?: StackLevel;
   /**
@@ -89,6 +106,14 @@ export interface ResolverOptions {
    * from a single view without the host restating it per route.
    */
   routes?: RouteDescriptor[];
+  /**
+   * Paths that push a rail level of their own.
+   *
+   * Everything else under `root` shares the root level however many URL
+   * segments it has — which is what keeps a sidebar still while you move
+   * between the rows it is showing. Mirrors `SETTINGS_SUB_LEVELS`.
+   */
+  subLevels?: { basePath: string; title?: string }[];
   /** Last word on a title, consulted before `routes` and the fallback. */
   titleFor?: (path: string) => string | undefined;
   /** Per-path presentation override, consulted before the stack's own. */
@@ -113,6 +138,16 @@ export function createResolver(options: ResolverOptions): Resolver {
     options.title ?? humanize(root.slice(root.lastIndexOf("/") + 1));
   const routes = options.routes ?? [];
   const known = new Map(routes.map((r) => [normalize(r.path), r] as const));
+  const subLevels = (options.subLevels ?? []).map((l) => ({
+    ...l,
+    basePath: normalize(l.basePath),
+  }));
+
+  /** The sub-level a path belongs to, matching `findSettingsSubLevel`. */
+  const subLevelFor = (path: string) =>
+    subLevels.find(
+      (level) => path === level.basePath || path.startsWith(`${level.basePath}/`),
+    );
 
   const titleOf = (path: string): string => {
     const explicit = options.titleFor?.(path);
@@ -143,14 +178,26 @@ export function createResolver(options: ResolverOptions): Resolver {
     const present = options.presentFor?.(path);
 
     if (segments.length === 0) {
-      return { depth: 0, path: root, title: rootTitle, leaf: leafOf(root), present };
+      return {
+        depth: 0,
+        level: 0,
+        path: root,
+        title: rootTitle,
+        leaf: leafOf(root),
+        present,
+      };
     }
+
+    // A declared sub-level is one rail level in, whatever its URL depth. With
+    // none declared the two numbers agree, which is the old behaviour.
+    const level = subLevels.length === 0 ? segments.length : subLevelFor(path) ? 1 : 0;
 
     const parentPath =
       segments.length === 1 ? root : `${root}/${segments.slice(0, -1).join("/")}`;
 
     return {
       depth: segments.length,
+      level,
       path,
       title: titleOf(path),
       parent: { path: parentPath, title: titleOf(parentPath) },

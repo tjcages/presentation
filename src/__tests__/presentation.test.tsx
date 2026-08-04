@@ -9,6 +9,8 @@ import { createResolver } from "../_resolve";
 const resolve = createResolver({
   root: "/settings",
   title: "Settings",
+  // Access is a rail level of its own; every other row shares the root list.
+  subLevels: [{ basePath: "/settings/access", title: "Access" }],
   routes: [
     { path: "/settings" },
     { path: "/settings/appearance", title: "Appearance" },
@@ -28,7 +30,13 @@ function Stack({
   children: React.ReactNode;
 } & Partial<React.ComponentProps<typeof Presentation>>) {
   return (
-    <Presentation path={path} navigate={navigate} resolve={resolve} {...rest}>
+    <Presentation
+      path={path}
+      navigate={navigate}
+      resolve={resolve}
+      rail={(e) => <nav>rail level {e.level}</nav>}
+      {...rest}
+    >
       {children}
     </Presentation>
   );
@@ -111,32 +119,42 @@ describe("<Presentation> — direction and presence", () => {
     ).toBe("back");
   });
 
-  it("flags a same-depth sibling swap so the rails presentation stays still", async () => {
-    // admin-kit keys both rails on depth, so a lateral move re-keys neither and
-    // nothing animates. This stack keys the pane on the path — a phone still
-    // pushes laterally — so the same-depth case is flagged instead, and the
-    // rails breakpoints zero its travel. Losing this flag silently reintroduces
-    // a slide the admin app has never had.
+  it("flags a move inside one rail level so the rails presentation stays still", async () => {
     const view = render(<Stack path="/settings/access/roles">roles</Stack>);
     await settle();
     view.rerender(<Stack path="/settings/access/people">people</Stack>);
 
-    const stack = pick(view.container, ".pr-stack");
-    expect(stack.hasAttribute("data-same-depth")).toBe(true);
+    expect(pick(view.container, ".pr-stack").hasAttribute("data-same-level")).toBe(true);
     // Direction is held from the last real move rather than flipping.
     expect(
       pick(view.container, '.pr-level[data-state="enter"]').getAttribute("data-direction"),
     ).toBe("forward");
   });
 
-  it("does not flag a real push or pop", async () => {
-    const view = render(<Stack path="/settings/access">access</Stack>);
+  /**
+   * The sidebar bug. `/settings` -> `/settings/appearance` is a URL segment
+   * deeper but the same sidebar list, so the rail must not move. Counting
+   * segments made it a push and slid a list that should have sat still.
+   */
+  it("treats two rows of the root list as one level, however deep their URLs", async () => {
+    const view = render(<Stack path="/settings">general</Stack>);
+    await settle();
+    view.rerender(<Stack path="/settings/appearance">appearance</Stack>);
+
+    const stack = pick(view.container, ".pr-stack");
+    expect(stack.getAttribute("data-level")).toBe("0");
+    expect(stack.hasAttribute("data-same-level")).toBe(true);
+    // The rail keeps a single entry: nothing exits, nothing enters.
+    expect(view.container.querySelectorAll(".pr-rail > .pr-level")).toHaveLength(1);
+  });
+
+  it("does flag a real level change", async () => {
+    const view = render(<Stack path="/settings/appearance">appearance</Stack>);
     await settle();
     view.rerender(<Stack path="/settings/access/roles">roles</Stack>);
-    expect(pick(view.container, ".pr-stack").hasAttribute("data-same-depth")).toBe(false);
-    await settle();
-    view.rerender(<Stack path="/settings/access">access</Stack>);
-    expect(pick(view.container, ".pr-stack").hasAttribute("data-same-depth")).toBe(false);
+    const stack = pick(view.container, ".pr-stack");
+    expect(stack.getAttribute("data-level")).toBe("1");
+    expect(stack.hasAttribute("data-same-level")).toBe(false);
   });
 
   it("makes the departing level inert so it cannot take focus or clicks", async () => {

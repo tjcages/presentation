@@ -339,7 +339,7 @@
 
 
 /*
- * A sibling swap at one depth moves nothing.
+ * A move within one rail level moves nothing.
  *
  * `admin-kit` gets this by keying both rails on depth, so the same-depth case
  * re-keys neither and there is no exit or enter at all. This stack keys on the
@@ -348,7 +348,7 @@
  * result on the rails side: the highlight moves, the content changes, and
  * nothing slides.
  */
-.pr-stack[data-present="rails"][data-same-depth] .pr-level {
+.pr-stack[data-present="rails"][data-same-level] .pr-level {
   --pr-in: 0%;
   --pr-out: 0%;
   --pr-dim: 1;
@@ -402,7 +402,7 @@
   }
 
   /*
-   * A sibling swap at one depth moves nothing.
+   * A move within one rail level moves nothing.
    *
    * `admin-kit` gets this by keying both rails on depth, so the same-depth case
    * re-keys neither and there is no exit or enter at all. This stack keys on the
@@ -411,7 +411,7 @@
    * result on the rails side: the highlight moves, the content changes, and
    * nothing slides.
    */
-  .pr-stack[data-present-sm="rails"][data-same-depth] .pr-level {
+  .pr-stack[data-present-sm="rails"][data-same-level] .pr-level {
     --pr-in: 0%;
     --pr-out: 0%;
     --pr-dim: 1;
@@ -459,7 +459,7 @@
   }
 
   /*
-   * A sibling swap at one depth moves nothing.
+   * A move within one rail level moves nothing.
    *
    * `admin-kit` gets this by keying both rails on depth, so the same-depth case
    * re-keys neither and there is no exit or enter at all. This stack keys on the
@@ -468,7 +468,7 @@
    * result on the rails side: the highlight moves, the content changes, and
    * nothing slides.
    */
-  .pr-stack[data-present-md="rails"][data-same-depth] .pr-level {
+  .pr-stack[data-present-md="rails"][data-same-level] .pr-level {
     --pr-in: 0%;
     --pr-out: 0%;
     --pr-dim: 1;
@@ -516,7 +516,7 @@
   }
 
   /*
-   * A sibling swap at one depth moves nothing.
+   * A move within one rail level moves nothing.
    *
    * `admin-kit` gets this by keying both rails on depth, so the same-depth case
    * re-keys neither and there is no exit or enter at all. This stack keys on the
@@ -525,7 +525,7 @@
    * result on the rails side: the highlight moves, the content changes, and
    * nothing slides.
    */
-  .pr-stack[data-present-lg="rails"][data-same-depth] .pr-level {
+  .pr-stack[data-present-lg="rails"][data-same-level] .pr-level {
     --pr-in: 0%;
     --pr-out: 0%;
     --pr-dim: 1;

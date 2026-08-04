@@ -90,6 +90,9 @@ export function Presentation({
 }: PresentationProps) {
   const entry = resolve(path);
   const depth = entry?.depth ?? 0;
+  // Rail level, which is not the URL depth: `/settings` and
+  // `/settings/appearance` are two rows of one list.
+  const level = entry?.level ?? depth;
   const styles = resolvePresentation(present, entry);
 
   // Push or pop, decided during render. The direction has to be known on the
@@ -98,21 +101,25 @@ export function Presentation({
   const [track, setTrack] = React.useState({
     path,
     depth,
+    level,
     dir: 1,
-    sameDepth: false,
+    sameLevel: false,
   });
   const moved = path !== track.path;
   /**
-   * A move between siblings at one depth.
+   * A move within one rail level.
    *
    * `admin-kit` keys both rails `level-${depth}`, so this re-keys neither and
-   * nothing animates — the list highlight and the page content just change in
-   * place. Re-animating a level you never left reads as a glitch. Tracked here
-   * rather than expressed as a key, because the same tree has to keep doing a
-   * real push on a phone; which of the two applies is a breakpoint question,
-   * and breakpoints are settled in CSS.
+   * nothing animates — the list highlight and the page content change in
+   * place. Note this is *level*, not URL depth: going from `/settings` to
+   * `/settings/appearance` is a segment deeper but the same list, and treating
+   * it as a push is what made the sidebar slide when it should have sat still.
+   *
+   * Tracked here rather than expressed as a key, because the same tree has to
+   * keep doing a real push on a phone, where that move genuinely is one. Which
+   * of the two applies is a breakpoint question, settled in CSS.
    */
-  const sameDepth = moved ? depth === track.depth : track.sameDepth;
+  const sameLevel = moved ? level === track.level : track.sameLevel;
   const dir = moved
     ? depth === track.depth
       ? track.dir
@@ -120,19 +127,19 @@ export function Presentation({
         ? 1
         : -1
     : track.dir;
-  if (moved) setTrack({ path, depth, dir, sameDepth });
+  if (moved) setTrack({ path, depth, level, dir, sameLevel });
   const direction = dir >= 0 ? "forward" : "back";
 
   const { entries, release } = usePresence(path, children);
   const recall = useLevelMemory(depth, children);
 
-  // The rail is its own presence, keyed by depth: siblings at one depth share
-  // a list, so this re-keys nothing and the list is left alone — only the
-  // highlight inside it moves. The pane is keyed by path because a phone still
-  // has to push laterally; on the rails side `data-same-depth` zeroes its
-  // travel so it lands in the same place admin-kit does.
+  // The rail is its own presence, keyed by rail level: every row of one list
+  // shares a key, so moving between them re-keys nothing and the list is left
+  // alone — only the highlight inside it moves. The pane is keyed by path
+  // because a phone still pushes; on the rails side `data-same-level` zeroes
+  // its travel so it lands where admin-kit does.
   const railNode = rail && entry ? rail(entry) : null;
-  const railPresence = usePresence(`depth-${depth}`, railNode);
+  const railPresence = usePresence(`level-${level}`, railNode);
 
   const stackRef = React.useRef<HTMLDivElement>(null);
   const parentPath = entry?.parent?.path;
@@ -171,7 +178,8 @@ export function Presentation({
         data-present-md={styles.md}
         data-present-lg={styles.lg}
         data-depth={depth}
-        data-same-depth={sameDepth ? "" : undefined}
+        data-level={level}
+        data-same-level={sameLevel ? "" : undefined}
         // The push spring lives in `_springs.ts`. It is published under its own
         // names rather than as `--pr-duration`/`--pr-ease` directly: an inline
         // declaration outranks every stylesheet rule, so writing the generic
@@ -191,7 +199,7 @@ export function Presentation({
                 key={item.key}
                 state={item.state}
                 direction={direction}
-                depth={depth}
+                depth={level}
                 onSettled={
                   item.state === "exit"
                     ? () => railPresence.release(item.key)

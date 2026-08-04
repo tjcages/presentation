@@ -78,6 +78,43 @@ describe("createResolver — titles", () => {
   });
 });
 
+describe("createResolver — rail levels", () => {
+  const levelled = createResolver({
+    root: "/settings",
+    title: "Settings",
+    routes: SETTINGS,
+    subLevels: [{ basePath: "/settings/access", title: "Access" }],
+  });
+
+  /**
+   * The bug this exists to prevent: `/settings` and `/settings/appearance` are
+   * two rows of one sidebar list. Counting URL segments makes the second look
+   * one level deeper, so the rail slides when it should sit perfectly still.
+   */
+  it("keeps every row of the root list on one level, whatever its URL depth", () => {
+    expect(levelled("/settings")?.level).toBe(0);
+    expect(levelled("/settings/appearance")?.level).toBe(0);
+    expect(levelled("/settings/access")?.level).toBe(1);
+  });
+
+  it("still reports URL depth separately, for the phone's push", () => {
+    expect(levelled("/settings")?.depth).toBe(0);
+    expect(levelled("/settings/appearance")?.depth).toBe(1);
+    expect(levelled("/settings/access/roles")?.depth).toBe(2);
+  });
+
+  it("puts a declared sub-level and everything under it one level in", () => {
+    expect(levelled("/settings/access")?.level).toBe(1);
+    expect(levelled("/settings/access/people")?.level).toBe(1);
+    expect(levelled("/settings/access/roles")?.level).toBe(1);
+  });
+
+  it("falls back to URL depth when no sub-levels are declared", () => {
+    expect(resolve("/settings/appearance")?.level).toBe(1);
+    expect(resolve("/settings/access/roles")?.level).toBe(2);
+  });
+});
+
 describe("createResolver — leaf detection", () => {
   it("marks a level with nothing nested under it as a leaf", () => {
     expect(resolve("/settings/appearance")?.leaf).toBe(true);
@@ -98,6 +135,7 @@ describe("createResolver — leaf detection", () => {
 describe("resolvePresentation", () => {
   const entry = (over: Partial<StackEntry> = {}): StackEntry => ({
     depth: 1,
+    level: 1,
     path: "/settings/appearance",
     title: "Appearance",
     ...over,
