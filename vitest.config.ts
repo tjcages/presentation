@@ -7,5 +7,6 @@ export default defineConfig({
     // `afterEach`; without globals it never runs and renders pile up in one
     // document. Assertions are still imported explicitly.
     globals: true,
+    setupFiles: ["./src/__tests__/setup.ts"],
   },
 });
