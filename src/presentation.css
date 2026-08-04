@@ -1,0 +1,411 @@
+/**
+ * @tjcages/presentation
+ *
+ * Two keyframe rules serve every presentation style at every breakpoint. The
+ * styles do not each get their own animation — they set the *endpoints* as
+ * custom properties, and the keyframes read them. `var()` inside a keyframe is
+ * substituted before the animation is sampled, so this is a substitution, not
+ * an interpolation, and it costs nothing.
+ *
+ * That indirection is what lets the breakpoint switch live in CSS. A stack
+ * declared `{ base: "push", md: "rails" }` renders one tree; the media queries
+ * below decide which endpoints apply. No resize listener, no media-query hook,
+ * no server-versus-client snapshot to get wrong, and no reflow after
+ * hydration — the markup is identical at every width.
+ *
+ * Everything is scoped under `.pr-stack`, and every colour, size, and duration
+ * is a `--pr-*` custom property with a neutral default. Override them from
+ * your own theme; nothing here hardcodes a palette.
+ */
+
+/* ── Registered properties ──────────────────────────────────────────────── */
+
+/*
+ * A custom property is an untyped string unless it is registered, and untyped
+ * strings cannot be transitioned — they jump. Registering these is what lets
+ * a released swipe animate the drag offset in CSS, resuming from wherever the
+ * finger stopped, which is the one motion a keyframe animation cannot express.
+ */
+@property --pr-drag {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 0px;
+}
+
+@property --pr-progress {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+
+/* ── Tokens ─────────────────────────────────────────────────────────────── */
+
+.pr-stack {
+  /* Endpoints. Overridden per style and per breakpoint further down. */
+  --pr-in: 100%; /* where an arriving level starts */
+  --pr-out: 32%; /* how far a departing level parallaxes */
+  --pr-dim: 0.6; /* opacity of a departing level */
+
+  /* Which axis the endpoints act on. Drawers flip this to Y. */
+  --pr-tx: var(--pr-shift);
+  --pr-ty: 0px;
+
+  /*
+   * Duration and easing are a sampled spring, and the sample lives in
+   * `_springs.ts` — the component writes both here as inline properties so
+   * there is one source of truth. These are the fallback for anyone using the
+   * stylesheet on its own, and are kept in step with `SPRINGS.push`.
+   */
+  --pr-duration: 300ms;
+  --pr-ease: linear(
+    0 0%, 0.042 2.564%, 0.126 5.128%, 0.237 7.692%, 0.351 10.256%,
+    0.453 12.821%, 0.551 15.385%, 0.631 17.949%, 0.705 20.513%, 0.765 23.077%,
+    0.812 25.641%, 0.853 28.205%, 0.886 30.769%, 0.91 33.333%, 0.931 35.897%,
+    0.947 38.462%, 0.959 41.026%, 0.969 43.59%, 0.976 46.154%, 0.982 48.718%,
+    0.986 51.282%, 0.989 53.846%, 0.992 56.41%, 0.994 58.974%, 0.996 61.538%,
+    0.997 64.103%, 0.998 66.667%, 0.998 69.231%, 0.999 71.795%, 0.999 74.359%,
+    0.999 76.923%, 0.999 79.487%, 1 82.051%, 1 84.615%, 1 87.179%,
+    1 89.744%, 1 92.308%, 1 94.872%, 1 97.436%, 1 100%
+  );
+
+  --pr-fade-duration: 160ms;
+  --pr-fade-ease: cubic-bezier(0.32, 0.72, 0, 1);
+
+  --pr-backdrop: rgb(0 0 0 / 0.15);
+  --pr-surface: Canvas;
+  --pr-radius: 12px;
+  --pr-shadow: -12px 0 28px -8px rgb(0 0 0 / 0.25);
+
+  position: relative;
+  /*
+   * `clip` rather than `hidden`: both hide the level arriving from off-screen,
+   * but `hidden` also establishes a scroll container, which silently breaks
+   * `position: sticky` on the nav bar and on every toolbar inside the page.
+   */
+  overflow-x: clip;
+}
+
+/* ── Levels ─────────────────────────────────────────────────────────────── */
+
+.pr-level {
+  transform: translate3d(var(--pr-tx), var(--pr-ty), 0);
+  will-change: transform, opacity;
+}
+
+/*
+ * The live level stays in flow so it contributes the page's height and so
+ * `sticky` inside it still resolves against the real scroll container.
+ */
+.pr-level[data-state="enter"] {
+  position: relative;
+  animation: pr-enter var(--pr-duration) var(--pr-ease) both;
+}
+
+/*
+ * A departing level is taken out of flow, or the two would stack vertically
+ * and the page would jump by a screen height mid-transition.
+ */
+.pr-level[data-state="exit"] {
+  position: absolute;
+  inset: 0;
+  animation: pr-exit var(--pr-duration) var(--pr-ease) both;
+  pointer-events: none;
+}
+
+/*
+ * Direction decides which endpoint each level uses. Pushing forward, the
+ * arriving level comes from the leading edge and the departing one parallaxes
+ * back; popping, exactly the reverse. Four rules, and no style below has to
+ * restate any of it.
+ */
+.pr-level[data-direction="forward"][data-state="enter"],
+.pr-level[data-direction="back"][data-state="exit"] {
+  --pr-shift: var(--pr-in);
+  --pr-opacity: 1;
+}
+
+.pr-level[data-direction="forward"][data-state="exit"],
+.pr-level[data-direction="back"][data-state="enter"] {
+  --pr-shift: calc(-1 * var(--pr-out));
+  --pr-opacity: var(--pr-dim);
+}
+
+@keyframes pr-enter {
+  from {
+    transform: translate3d(var(--pr-tx), var(--pr-ty), 0);
+    opacity: var(--pr-opacity);
+  }
+  to {
+    transform: translate3d(0, 0, 0);
+    opacity: 1;
+  }
+}
+
+@keyframes pr-exit {
+  from {
+    transform: translate3d(0, 0, 0);
+    opacity: 1;
+  }
+  to {
+    transform: translate3d(var(--pr-tx), var(--pr-ty), 0);
+    opacity: var(--pr-opacity);
+  }
+}
+
+/*
+ * Opacity is deliberately not on the position spring. The fade finishing well
+ * before the slide settles is the single thing that most separates this from
+ * a slide — it is what the smoothest of the implementations this was merged
+ * from does, and matching the two durations flattens it noticeably.
+ */
+.pr-level[data-state="enter"],
+.pr-level[data-state="exit"] {
+  animation-composition: replace;
+}
+
+.pr-level {
+  transition: opacity var(--pr-fade-duration) var(--pr-fade-ease);
+}
+
+/* ── Styles ─────────────────────────────────────────────────────────────── */
+
+/* push — the iOS navigation stack. The default. */
+.pr-stack[data-present="push"] {
+  --pr-in: 100%;
+  --pr-out: 32%;
+  --pr-dim: 0.6;
+  --pr-tx: var(--pr-shift);
+  --pr-ty: 0px;
+}
+
+/*
+ * rails — a list and a detail moving together. A shorter throw than a push,
+ * because on a wide viewport the two rails stay visible throughout and a
+ * full-width slide reads as a page reload rather than as a drill-in.
+ */
+.pr-stack[data-present="rails"] {
+  --pr-in: 25%;
+  --pr-out: 25%;
+  --pr-dim: 0;
+  --pr-tx: var(--pr-shift);
+  --pr-ty: 0px;
+  --pr-duration: 260ms;
+}
+
+.pr-stack[data-present="rails"] .pr-rail-detail {
+  --pr-in: 10%;
+  --pr-out: 10%;
+  --pr-duration: 240ms;
+}
+
+/* drawer — a single view rising from the bottom edge. */
+.pr-stack[data-present="drawer"] {
+  --pr-in: 100%;
+  --pr-out: 0%;
+  --pr-dim: 1;
+  --pr-tx: 0px;
+  --pr-ty: var(--pr-shift);
+}
+
+/* fade — crossfade in place. */
+.pr-stack[data-present="fade"] {
+  --pr-in: 0%;
+  --pr-out: 0%;
+  --pr-dim: 0;
+  --pr-tx: 0px;
+  --pr-ty: 0px;
+  --pr-duration: var(--pr-fade-duration);
+  --pr-ease: var(--pr-fade-ease);
+}
+
+/* none — swap with nothing moving. */
+.pr-stack[data-present="none"] {
+  --pr-in: 0%;
+  --pr-out: 0%;
+  --pr-dim: 1;
+  --pr-tx: 0px;
+  --pr-ty: 0px;
+  --pr-duration: 1ms;
+}
+
+/* ── Breakpoints ────────────────────────────────────────────────────────── */
+
+/*
+ * The whole adaptive story. `data-present-*` carries the resolved style for
+ * each breakpoint; the widest matching query wins by source order, exactly as
+ * a utility-CSS cascade would.
+ */
+@media (min-width: 640px) {
+  .pr-stack[data-present-sm="push"] { --pr-in: 100%; --pr-out: 32%; --pr-dim: 0.6; --pr-tx: var(--pr-shift); --pr-ty: 0px; }
+  .pr-stack[data-present-sm="rails"] { --pr-in: 25%; --pr-out: 25%; --pr-dim: 0; --pr-tx: var(--pr-shift); --pr-ty: 0px; --pr-duration: 260ms; }
+  .pr-stack[data-present-sm="drawer"] { --pr-in: 100%; --pr-out: 0%; --pr-dim: 1; --pr-tx: 0px; --pr-ty: var(--pr-shift); }
+  .pr-stack[data-present-sm="fade"] { --pr-in: 0%; --pr-out: 0%; --pr-dim: 0; --pr-tx: 0px; --pr-ty: 0px; --pr-duration: var(--pr-fade-duration); --pr-ease: var(--pr-fade-ease); }
+  .pr-stack[data-present-sm="none"] { --pr-in: 0%; --pr-out: 0%; --pr-dim: 1; --pr-tx: 0px; --pr-ty: 0px; --pr-duration: 1ms; }
+}
+
+@media (min-width: 768px) {
+  .pr-stack[data-present-md="push"] { --pr-in: 100%; --pr-out: 32%; --pr-dim: 0.6; --pr-tx: var(--pr-shift); --pr-ty: 0px; }
+  .pr-stack[data-present-md="rails"] { --pr-in: 25%; --pr-out: 25%; --pr-dim: 0; --pr-tx: var(--pr-shift); --pr-ty: 0px; --pr-duration: 260ms; }
+  .pr-stack[data-present-md="drawer"] { --pr-in: 100%; --pr-out: 0%; --pr-dim: 1; --pr-tx: 0px; --pr-ty: var(--pr-shift); }
+  .pr-stack[data-present-md="fade"] { --pr-in: 0%; --pr-out: 0%; --pr-dim: 0; --pr-tx: 0px; --pr-ty: 0px; --pr-duration: var(--pr-fade-duration); --pr-ease: var(--pr-fade-ease); }
+  .pr-stack[data-present-md="none"] { --pr-in: 0%; --pr-out: 0%; --pr-dim: 1; --pr-tx: 0px; --pr-ty: 0px; --pr-duration: 1ms; }
+}
+
+@media (min-width: 1024px) {
+  .pr-stack[data-present-lg="push"] { --pr-in: 100%; --pr-out: 32%; --pr-dim: 0.6; --pr-tx: var(--pr-shift); --pr-ty: 0px; }
+  .pr-stack[data-present-lg="rails"] { --pr-in: 25%; --pr-out: 25%; --pr-dim: 0; --pr-tx: var(--pr-shift); --pr-ty: 0px; --pr-duration: 260ms; }
+  .pr-stack[data-present-lg="drawer"] { --pr-in: 100%; --pr-out: 0%; --pr-dim: 1; --pr-tx: 0px; --pr-ty: var(--pr-shift); }
+  .pr-stack[data-present-lg="fade"] { --pr-in: 0%; --pr-out: 0%; --pr-dim: 0; --pr-tx: 0px; --pr-ty: 0px; --pr-duration: var(--pr-fade-duration); --pr-ease: var(--pr-fade-ease); }
+  .pr-stack[data-present-lg="none"] { --pr-in: 0%; --pr-out: 0%; --pr-dim: 1; --pr-tx: 0px; --pr-ty: 0px; --pr-duration: 1ms; }
+}
+
+/* ── Gesture ────────────────────────────────────────────────────────────── */
+
+/*
+ * While a finger is down the animation is off entirely and the transform is
+ * driven directly, so the panel tracks the touch with no easing between it
+ * and the finger. On release the animation is handed to `Element.animate()`
+ * with a spring, which is the one thing CSS cannot do from here: resume from
+ * wherever the drag happened to stop.
+ */
+.pr-stack[data-dragging] .pr-level {
+  animation: none !important;
+  transition: none !important;
+}
+
+.pr-stack[data-dragging] .pr-level[data-role="top"] {
+  transform: translate3d(var(--pr-drag, 0px), 0, 0);
+  box-shadow: var(--pr-shadow);
+}
+
+/*
+ * The level being swiped toward, revealed underneath and parallaxing in from
+ * its parked position as the finger travels. `--pr-progress` is 0 at rest and
+ * 1 when the drag has crossed the full width.
+ */
+.pr-stack .pr-level[data-role="beneath"] {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  animation: none;
+  transform: translate3d(calc(var(--pr-out) * (var(--pr-progress) - 1)), 0, 0);
+  opacity: calc(var(--pr-dim) + (1 - var(--pr-dim)) * var(--pr-progress));
+}
+
+.pr-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: var(--pr-backdrop);
+  opacity: calc(1 - var(--pr-progress));
+  pointer-events: none;
+}
+
+/*
+ * Releasing. The drag offset and the progress are transitioned rather than
+ * keyframed, so the motion picks up from the finger's last position — and the
+ * level underneath, the backdrop, and the panel all read the same two
+ * properties, so one transition drives every part of the pop in step.
+ */
+.pr-stack[data-releasing] {
+  transition:
+    --pr-drag var(--pr-release-duration, 300ms) var(--pr-release-ease, ease-out),
+    --pr-progress var(--pr-release-duration, 300ms) var(--pr-release-ease, ease-out);
+}
+
+.pr-stack[data-releasing] .pr-level {
+  animation: none;
+}
+
+.pr-stack[data-releasing] .pr-level[data-role="top"] {
+  transform: translate3d(var(--pr-drag), 0, 0);
+  box-shadow: var(--pr-shadow);
+}
+
+/* ── Chrome ─────────────────────────────────────────────────────────────── */
+
+.pr-bar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 3rem;
+  padding-inline: 0.25rem;
+  background: color-mix(in srgb, var(--pr-surface) 85%, transparent);
+  backdrop-filter: blur(12px);
+}
+
+.pr-bar-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.125rem;
+  /* Never a glyph-only target: 44px is the smallest reliably tappable box. */
+  min-height: 44px;
+  min-width: 44px;
+  padding-inline: 0.25rem 0.5rem;
+  max-width: 45%;
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.pr-bar-back > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pr-bar-back:active {
+  opacity: 0.5;
+}
+
+/*
+ * The resolver's title, shown only when the page has not supplied its own.
+ * `<Presentation.Title>` portals into the same element, so the default simply
+ * stops being an only child — no state, no measurement, no flash.
+ */
+.pr-bar-title-default:not(:only-child) {
+  display: none;
+}
+
+.pr-bar-title {
+  position: absolute;
+  left: 50%;
+  translate: -50% 0;
+  max-width: 50%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  pointer-events: none;
+  font-weight: 500;
+}
+
+.pr-bar-actions {
+  margin-inline-start: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* ── Reduced motion ─────────────────────────────────────────────────────── */
+
+/*
+ * The transition goes, the navigation stays. The gesture is still live —
+ * it is the user moving their own finger, not the interface moving on its
+ * own — it simply lands instantly instead of springing.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .pr-stack {
+    --pr-duration: 1ms !important;
+    --pr-fade-duration: 1ms;
+    --pr-release-duration: 1ms !important;
+  }
+
+  .pr-level {
+    transition: none;
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "name": "@tjcages/presentation",
+  "version": "0.1.0",
+  "description": "URL-derived push/pop presentation — iOS-style page pushing on mobile, synced rails on desktop. Router-free, zero runtime dependencies.",
+  "type": "module",
+  "sideEffects": ["*.css"],
+  "files": ["dist"],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./presentation.css": "./dist/presentation.css"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && cp src/presentation.css dist/presentation.css",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "react-dom": ">=18"
+  },
+  "devDependencies": {
+    "@testing-library/react": "^16.1.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "jsdom": "^25.0.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "typescript": "^5.7.0",
+    "vitest": "^2.1.8"
+  },
+  "keywords": ["react", "navigation", "ios", "push", "presentation", "gesture"],
+  "license": "MIT"
+}
