@@ -445,3 +445,61 @@ export function AccessPage({ section }: { section: AccessSection }) {
     </SettingsShell>
   );
 }
+
+
+/* ── The root nav's destinations ─────────────────────────────────────────── */
+
+/**
+ * Every `to` in `NAV` needs a page, or its row is a dead link — and the
+ * sidebar's "Albums" back affordance is a button that leaves you where you
+ * were. These are faked, on the standard frame: `SettingsShell` is just
+ * `PageShell` + `PageHeader`, which is what every page in the app sits on.
+ */
+const ROOT_PAGES: Record<string, { title: string; description: string; card: string; body: string }> = {
+  "/": {
+    title: "Albums",
+    description: "Every release in the catalog.",
+    card: "Catalog",
+    body: "Nothing here — this page is a stand-in so the nav row and the sidebar's back affordance both lead somewhere real.",
+  },
+  "/analytics": {
+    title: "Analytics",
+    description: "Plays, activations, and territory breakdowns.",
+    card: "Overview",
+    body: "Stand-in page.",
+  },
+  "/crm": {
+    title: "Roster",
+    description: "Contacts, threads, and deals.",
+    card: "Directory",
+    body: "Stand-in page.",
+  },
+  "/pricing": {
+    title: "Labels",
+    description: "Label admin and the pricing calculator.",
+    card: "Labels",
+    body: "Stand-in page.",
+  },
+  "/policies": {
+    title: "Policies",
+    description: "Published policy documents.",
+    card: "Documents",
+    body: "Stand-in page.",
+  },
+};
+
+export function isRootPage(path: string): boolean {
+  return path in ROOT_PAGES;
+}
+
+export function RootPage({ path }: { path: string }) {
+  const page = ROOT_PAGES[path];
+  if (!page) return null;
+  return (
+    <SettingsShell title={page.title} description={page.description}>
+      <SettingsCard title={page.card}>
+        <p className="text-foreground-300 text-sm">{page.body}</p>
+      </SettingsCard>
+    </SettingsShell>
+  );
+}

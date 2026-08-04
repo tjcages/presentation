@@ -35,6 +35,8 @@ import {
   ModelsPage,
   NavigationPage,
   PricingPage,
+  RootPage,
+  isRootPage,
   toAccessSection,
   type AccessSection,
 } from "./pages";
@@ -128,7 +130,14 @@ function Screen({ path, section }: { path: string; section: AccessSection }) {
     case "/settings/pricing": return <PricingPage />;
     case "/settings/models": return <ModelsPage />;
     case "/settings/integrations": return <IntegrationsPage />;
-    default: return <SettingsShell title="Not found"><span /></SettingsShell>;
+    default:
+      return isRootPage(path) ? (
+        <RootPage path={path} />
+      ) : (
+        <SettingsShell title="Not found" description={path}>
+          <span />
+        </SettingsShell>
+      );
   }
 }
 
@@ -143,10 +152,6 @@ const PRESETS: { label: string; value: PresentSpec }[] = [
 function App() {
   const [path, search, navigate] = useLocation();
   const [preset, setPreset] = React.useState(0);
-
-  React.useEffect(() => {
-    if (!path.startsWith("/settings")) navigate("/settings");
-  }, [path, navigate]);
 
   const section = toAccessSection(new URLSearchParams(search).get("tab"));
   const spec = PRESETS[preset]?.value ?? "push";

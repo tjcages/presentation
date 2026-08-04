@@ -147,40 +147,17 @@ body {
 .pr-stack {
   --pr-surface: var(--color-background-100);
   --pr-backdrop: rgb(0 0 0 / 0.18);
-  --pr-rail-width: 244px;
-  --pr-rail-gap: 0px;
-  /* Must equal the demo header's height exactly, or the sticky rail
-     lands 3px off its resting position and nudges on every scroll
-     reset — which reads as the sidebar jumping. */
-  --pr-rail-top: 44px;
-  min-height: 100dvh;
-  background: var(--color-canvas);
+  min-height: 0;
+  background: transparent;
 }
 
-.pr-rail {
-  padding: 8px;
-}
-
-@media (min-width: 768px) {
-  .pr-rail {
-    border-right: 1px solid var(--color-border-100);
-  }
-
-  /* The rail shows the same levels, so the mobile bar would duplicate it. */
-  .pr-bar {
-    display: none;
-  }
-}
-
-.pr-bar {
-  border-bottom: 1px solid var(--color-border-100);
-  color: var(--color-foreground-100);
-}
-
-.pr-bar-back {
-  color: var(--color-accent-100);
-  font-weight: 500;
-}
+/*
+ * The rail carries no edge of its own.
+ *
+ * The sidebar it lives inside already draws the app's edge, full height. A
+ * second border here is a shorter line a few pixels away from it, which is
+ * visible as exactly that: a stray rule that stops partway down the page.
+ */
 
 /* ── Demo chrome. Nothing below is part of the package or the app. ──────── */
 
