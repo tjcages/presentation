@@ -292,7 +292,7 @@ export const Sidebar = ({
       <div
         data-slot="sidebar-container"
         className={cn(
-          "w-(--sidebar-width) fixed inset-y-0 z-10 hidden h-svh transition-[left,right,width] duration-200 ease-linear md:flex",
+          "w-(--sidebar-width) fixed inset-y-0 z-10 hidden h-svh transition-[left,right,width] duration-[260ms] ease-[cubic-bezier(0.32,0.72,0,1)] md:flex",
           "group-data-[resizing]/sidebar-wrapper:transition-none",
           side === "left"
             ? "left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]"
@@ -420,7 +420,7 @@ export const SidebarInset = ({
         // glass.
         "bg-canvas relative flex min-h-0 w-full flex-1 flex-col",
         "md:pl-(--sidebar-width) md:peer-data-[state=collapsed]:pl-(--sidebar-width-icon) md:peer-data-[collapsible=offcanvas]:pl-0",
-        "transition-[padding] duration-200 ease-linear group-data-[resizing]/sidebar-wrapper:transition-none",
+        "transition-[padding] duration-[260ms] ease-[cubic-bezier(0.32,0.72,0,1)] group-data-[resizing]/sidebar-wrapper:transition-none",
         "md:peer-data-[variant=inset]:m-2 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:peer-data-[state=collapsed]:ml-2 md:peer-data-[variant=inset]:rounded-xl md:peer-data-[variant=inset]:shadow-sm",
         className,
       )}
@@ -500,8 +500,19 @@ export const SidebarGroupLabel = ({
       data-slot="sidebar-group-label"
       data-sidebar="group-label"
       className={cn(
-        "text-sidebar-foreground/70 ring-sidebar-ring outline-hidden flex h-8 shrink-0 items-center rounded-md px-2 text-xs font-medium transition-[margin,opacity] duration-200 ease-linear focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0",
-        "group-data-[collapsible=icon]:-mt-8 group-data-[collapsible=icon]:opacity-0",
+        "text-sidebar-foreground/70 ring-sidebar-ring outline-hidden flex h-8 shrink-0 items-center rounded-md px-2 text-xs font-medium transition-[height,margin,opacity,background-color] duration-[260ms] ease-[cubic-bezier(0.32,0.72,0,1)] focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0",
+        /*
+         * Collapsed, a heading becomes a rule. It has to be the *divider*
+         * colour — inheriting the label's own muted text colour gives a line
+         * that is lighter in one state than the other, which is what reads as
+         * the colour being off. `border-100` is the token every other divider
+         * in the app uses.
+         */
+        "group-data-[collapsible=icon]:h-px group-data-[collapsible=icon]:my-2",
+        "group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:w-6",
+        "group-data-[collapsible=icon]:bg-border-100 group-data-[collapsible=icon]:px-0",
+        "group-data-[collapsible=icon]:[&>span]:opacity-0",
+        "[&>span]:transition-opacity [&>span]:duration-150",
         className,
       )}
       {...props}
@@ -564,11 +575,31 @@ const sidebarMenuButtonVariants = cva(
     "data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground",
     "data-[active=true]:text-accent-100 data-[active=true]:hover:bg-sidebar-accent data-[active=true]:[&>svg]:text-accent-100 data-[active=true]:bg-transparent",
     "group-has-data-[sidebar=menu-action]/menu-item:pr-8",
-    // Collapsed rail: keep the row full-width and left-anchored; px-2 centers
-    // a 16px icon in the 32px content column (3rem rail − 2×8px container
-    // padding), and the padding transition makes the icon DRIFT to center in
-    // sync with the width animation instead of jumping.
-    "group-data-[collapsible=icon]:px-2! group-data-[collapsible=icon]:[&>span:last-child]:hidden",
+    /*
+     * The icon column never moves.
+     *
+     * The leading padding is the same in both states, so an icon sits at the
+     * same x whether the rail is 3rem or 16rem — collapsing only takes width
+     * away on the trailing side. The previous rule drifted the padding from
+     * 12px to 8px along with the width, which reads as every icon sliding
+     * left by 10px while the panel closes.
+     *
+     * The label is clipped by the row's own `overflow-hidden` as the rail
+     * narrows, and fades while it goes. `display: none` cannot be
+     * transitioned, so hiding it outright made the text disappear a frame
+     * before the panel had finished closing.
+     */
+    "group-data-[collapsible=icon]:pr-2!",
+    /*
+     * Opening, the label waits for the panel to be most of the way out before
+     * it fades in; closing, it leaves first. Matching the two durations makes
+     * the text fade *while* the rail is clipping it, which looks like a
+     * rendering fault rather than a transition.
+     */
+    "[&>span:last-child]:transition-opacity [&>span:last-child]:duration-150 [&>span:last-child]:delay-100",
+    "group-data-[collapsible=icon]:[&>span:last-child]:opacity-0",
+    "group-data-[collapsible=icon]:[&>span:last-child]:duration-100",
+    "group-data-[collapsible=icon]:[&>span:last-child]:delay-0",
     "focus-visible:ring-1 disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50",
     "[&>span:last-child]:truncate",
   ),
@@ -580,7 +611,9 @@ const sidebarMenuButtonVariants = cva(
           "bg-background-100 shadow-[0_0_0_1px_var(--color-sidebar-border)] hover:shadow-[0_0_0_1px_var(--color-sidebar-accent)]",
       },
       size: {
-        default: "min-h-[34px] px-3 py-1.5 text-sm",
+        // `pl-2` matches the container's own padding so icon-left is
+        // 8 + 8 = 16px, dead centre of the 3rem collapsed rail.
+        default: "min-h-[34px] pl-2 pr-3 py-1.5 text-sm",
         sm: "min-h-[28px] px-2 py-1 text-xs",
         lg: "group-data-[collapsible=icon]:p-0! h-12 px-3 text-sm",
       },

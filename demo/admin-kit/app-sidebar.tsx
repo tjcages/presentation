@@ -316,7 +316,7 @@ export function AppSidebar({
     <Sidebar collapsible="icon">
       {brand && <SidebarHeader className="p-0">{brand}</SidebarHeader>}
 
-      <SidebarContent className="**:data-[sidebar=menu-button]:gap-3 px-3.5 pt-4 group-data-[collapsible=icon]:px-2">
+      <SidebarContent className="**:data-[sidebar=menu-button]:gap-3 px-2 pt-4">
         {/* Profile selector pinned above the nav — stays put while sidebar
             screens push/pop below it (it scopes the whole app, not a level). */}
         {profileSlot && <div className="pb-3">{profileSlot}</div>}
@@ -332,7 +332,7 @@ export function AppSidebar({
         )}
       </SidebarContent>
 
-      <SidebarFooter className="px-3.5 pb-4 group-data-[collapsible=icon]:px-2">
+      <SidebarFooter className="px-2 pb-4">
         <div className="flex w-full flex-col">
           {nav.footer && nav.footer.length > 0 && (
             <AtRootLevel>

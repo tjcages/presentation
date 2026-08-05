@@ -63,32 +63,44 @@ function initials(name: string) {
 /** `<Brand />` — the waveform mark beside the wordmark. */
 function Brand() {
   return (
-    <div className="flex h-14 items-center gap-2 px-3.5 group-data-[collapsible=icon]:px-2">
-      <BrandMark className="text-accent-100 h-5 w-auto shrink-0" />
-      <span className="text-foreground-100 truncate text-[15px] font-medium group-data-[collapsible=icon]:hidden">
+    <div className="flex h-14 items-center gap-3 px-2">
+      <span className="flex size-8 shrink-0 items-center justify-center">
+        <BrandMark className="text-accent-100 h-5 w-auto" />
+      </span>
+      <span className="text-foreground-100 truncate text-[15px] font-medium transition-opacity duration-150 delay-100 group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:duration-100 group-data-[collapsible=icon]:delay-0">
         Totem
       </span>
     </div>
   );
 }
 
-/** `<SidebarProfileRow />` — who you are, with the switcher affordance. */
+/**
+ * `<SidebarProfileRow />` — who you are, with the switcher affordance.
+ *
+ * Survives collapsing. It used to be wrapped in
+ * `group-data-[collapsible=icon]:hidden`, so the one row identifying the
+ * signed-in account vanished the moment the rail closed — leaving a rail of
+ * anonymous glyphs. Collapsed it keeps the avatar and drops the text, on the
+ * same column as every icon below it: a 32px avatar at x=8 centres on 24,
+ * which is where a 16px icon at x=16 centres too.
+ */
 function SidebarProfileRow() {
   return (
     <button
       type="button"
       className={cn(
-        "hover:bg-sidebar-accent flex w-full min-w-0 cursor-pointer items-center gap-2.5 rounded-lg p-1.5 text-left transition-colors",
+        "hover:bg-sidebar-accent flex w-full min-w-0 cursor-pointer items-center gap-3 rounded-lg py-1.5 pr-1.5 text-left",
+        "transition-[background-color] duration-150",
       )}
     >
-      <span className="bg-accent-100 flex size-9 shrink-0 items-center justify-center rounded-lg text-xs font-medium text-white">
+      <span className="bg-accent-100 flex size-8 shrink-0 items-center justify-center rounded-lg text-xs font-medium text-white">
         {initials(USER.name)}
       </span>
-      <span className="flex min-w-0 flex-col">
+      <span className="flex min-w-0 flex-col transition-opacity duration-150 delay-100 group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:duration-100 group-data-[collapsible=icon]:delay-0">
         <span className="text-foreground-100 truncate text-sm font-medium">{USER.name}</span>
         <span className="text-foreground-300 truncate text-xs">{USER.email}</span>
       </span>
-      <ChevronSelectorVertical className="text-foreground-300 ml-auto size-4 shrink-0" />
+      <ChevronSelectorVertical className="text-foreground-300 ml-auto size-4 shrink-0 transition-opacity duration-150 delay-100 group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:duration-100 group-data-[collapsible=icon]:delay-0" />
     </button>
   );
 }
@@ -166,11 +178,7 @@ export function AppChrome({
       pathname={pathname}
       Link={Link}
       brand={<Brand />}
-      profileSlot={
-        <div className="group-data-[collapsible=icon]:hidden">
-          <SidebarProfileRow />
-        </div>
-      }
+      profileSlot={<SidebarProfileRow />}
       sidebarScreens={sidebarScreens}
       onSidebarBack={onSidebarBack}
       sidebarBackLabel={sidebarBackLabel}
