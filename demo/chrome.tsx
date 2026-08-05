@@ -64,8 +64,8 @@ function initials(name: string) {
 function Brand() {
   return (
     <div className="flex h-14 items-center gap-3 px-2">
-      <span className="flex size-8 shrink-0 items-center justify-center">
-        <BrandMark className="text-accent-100 h-5 w-auto" />
+      <span className="flex size-9 shrink-0 items-center justify-center">
+        <BrandMark className="text-accent-100 h-6 w-auto" />
       </span>
       <span className="text-foreground-100 truncate text-[15px] font-medium transition-opacity duration-150 delay-100 group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:duration-100 group-data-[collapsible=icon]:delay-0">
         Totem
@@ -93,7 +93,7 @@ function SidebarProfileRow() {
         "transition-[background-color] duration-150",
       )}
     >
-      <span className="bg-accent-100 flex size-8 shrink-0 items-center justify-center rounded-lg text-xs font-medium text-white">
+      <span className="bg-accent-100 flex size-9 shrink-0 items-center justify-center rounded-lg text-xs font-medium text-white">
         {initials(USER.name)}
       </span>
       <span className="flex min-w-0 flex-col transition-opacity duration-150 delay-100 group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:duration-100 group-data-[collapsible=icon]:delay-0">

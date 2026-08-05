@@ -42,7 +42,10 @@ export function SectionsMenu({
             {/* A sub-heading starts a run of related rows — the workspace
                 lenses read as views of one thing, not as separate pages. */}
             {section.group && section.group !== level.sections[i - 1]?.group && (
-              <SidebarGroupLabel className="text-foreground-300/70 mt-2 group-data-[collapsible=icon]:hidden">
+              // No `hidden` when collapsed: a sub-heading that disappears
+              // takes its height with it, so every row below it moves up. It
+              // becomes a rule instead, like the level's own heading.
+              <SidebarGroupLabel className="text-foreground-300/70 mt-2">
                 <span className="min-w-0 flex-1 truncate">{section.group}</span>
               </SidebarGroupLabel>
             )}

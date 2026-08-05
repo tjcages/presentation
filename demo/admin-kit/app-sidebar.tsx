@@ -307,7 +307,20 @@ export function AppSidebar({
   // already-mounted stack). Collapsed-icon and mobile-Sheet keep the static
   // root (NavStack's mobile path portals full-screen to <body>, which is
   // correct for a page but wrong in a sidebar).
-  const useStack = state === "expanded" && !isMobile;
+  /*
+   * The level you are in survives collapsing.
+   *
+   * This used to require `expanded`, so closing the rail swapped the pushed
+   * level for the root nav — a different list, of a different length, with a
+   * back affordance that simply ceased to exist. Every icon jumped to a new
+   * vertical position and the way out of the level went with it.
+   *
+   * That condition existed because NavStack's mobile path portals full-screen
+   * to `<body>`, which is wrong inside a sidebar. `<Presentation>` in
+   * rail-only mode portals nothing, so the level can stay mounted at any
+   * width and collapsing is purely a horizontal change.
+   */
+  const useStack = !isMobile;
 
   return (
     // Publishes the pushed-level depth to the footer, which is a sibling of
@@ -434,16 +447,38 @@ function SidebarLevels({
   );
 }
 
-/** NavStack's back affordance, unchanged. */
+/**
+ * The level's back affordance.
+ *
+ * Built on the same geometry as a nav row so it does not shift when the rail
+ * closes: 8px leading padding, a 20px glyph, and a label that fades on the
+ * same lead/lag as every other label. Collapsed it is the chevron alone, still
+ * on the icon column — losing it entirely left no way out of a pushed level.
+ */
 function BackButton({ label, onClick }: { label: string; onClick: () => void }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="text-foreground-300 hover:text-foreground-100 -ml-1 mb-3 inline-flex w-full min-w-0 items-center gap-1 rounded-md px-1 py-1 text-sm font-medium transition-colors"
+      title={label}
+      className={cn(
+        "text-foreground-300 hover:text-foreground-100 hover:bg-sidebar-accent",
+        "mb-1 flex min-h-[38px] w-full min-w-0 items-center gap-3 rounded-lg py-1.5 pl-2 pr-3 text-sm font-medium",
+        "transition-[color,background-color] duration-150",
+        "[&>svg]:size-5 [&>svg]:shrink-0",
+        "group-data-[collapsible=icon]:pr-2!",
+      )}
     >
-      <ChevronLeft className="size-4 shrink-0" />
-      <span className="truncate text-left">{label}</span>
+      <ChevronLeft />
+      <span
+        className={cn(
+          "truncate text-left transition-opacity duration-150 delay-100",
+          "group-data-[collapsible=icon]:opacity-0",
+          "group-data-[collapsible=icon]:duration-100 group-data-[collapsible=icon]:delay-0",
+        )}
+      >
+        {label}
+      </span>
     </button>
   );
 }

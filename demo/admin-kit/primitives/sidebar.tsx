@@ -25,7 +25,14 @@ const SIDEBAR_COOKIE_NAME = "sidebar_state";
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
 const SIDEBAR_WIDTH = "16rem";
 const SIDEBAR_WIDTH_MOBILE = "18rem";
-const SIDEBAR_WIDTH_ICON = "3rem";
+/*
+ * Collapsed rail width = 2 x gutter + icon = 16 + 20 + 16 = 52px.
+ *
+ * Tied to the icon size on purpose: the gutter is what keeps an icon at the
+ * same x in both states, so changing one without the other puts the collapsed
+ * column off-centre by the difference.
+ */
+const SIDEBAR_WIDTH_ICON = "3.25rem";
 const SIDEBAR_KEYBOARD_SHORTCUT = "b";
 const SIDEBAR_DEFAULT_WIDTH = 256;
 const SIDEBAR_MIN_WIDTH = 200;
@@ -502,15 +509,23 @@ export const SidebarGroupLabel = ({
       className={cn(
         "text-sidebar-foreground/70 ring-sidebar-ring outline-hidden flex h-8 shrink-0 items-center rounded-md px-2 text-xs font-medium transition-[height,margin,opacity,background-color] duration-[260ms] ease-[cubic-bezier(0.32,0.72,0,1)] focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0",
         /*
-         * Collapsed, a heading becomes a rule. It has to be the *divider*
-         * colour — inheriting the label's own muted text colour gives a line
-         * that is lighter in one state than the other, which is what reads as
-         * the colour being off. `border-100` is the token every other divider
-         * in the app uses.
+         * Collapsed, a heading becomes a rule — drawn *inside* the heading's
+         * own box, which keeps its 32px height.
+         *
+         * Shrinking the element to the height of the line instead cost 15px
+         * per heading, and every row below inherited the loss: with three
+         * headings the bottom of the list rose 61px while the panel closed.
+         * Nothing may change height here; only what is painted inside it.
+         *
+         * The rule is `border-100`, the token the rest of the app divides
+         * with. Inheriting the label's muted *text* colour gave a line that
+         * was lighter in one theme than the other.
          */
-        "group-data-[collapsible=icon]:h-px group-data-[collapsible=icon]:my-2",
-        "group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:w-6",
-        "group-data-[collapsible=icon]:bg-border-100 group-data-[collapsible=icon]:px-0",
+        "relative",
+        "group-data-[collapsible=icon]:after:absolute group-data-[collapsible=icon]:after:left-1/2",
+        "group-data-[collapsible=icon]:after:top-1/2 group-data-[collapsible=icon]:after:h-px",
+        "group-data-[collapsible=icon]:after:w-6 group-data-[collapsible=icon]:after:-translate-x-1/2",
+        "group-data-[collapsible=icon]:after:-translate-y-1/2 group-data-[collapsible=icon]:after:bg-border-100",
         "group-data-[collapsible=icon]:[&>span]:opacity-0",
         "[&>span]:transition-opacity [&>span]:duration-150",
         className,
@@ -569,7 +584,7 @@ const sidebarMenuButtonVariants = cva(
   cn(
     "peer/menu-button group/menu-button ring-sidebar-ring outline-hidden flex w-full min-w-0 cursor-pointer items-center gap-2 overflow-hidden rounded-lg text-left font-medium",
     "transition-[color,background-color,padding] duration-300 ease-out motion-reduce:transition-none",
-    "[&>svg]:text-foreground-300 [&>svg]:size-4 [&>svg]:shrink-0",
+    "[&>svg]:text-foreground-300 [&>svg]:size-5 [&>svg]:shrink-0",
     "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
     "active:bg-sidebar-accent active:text-sidebar-accent-foreground",
     "data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground",
@@ -613,7 +628,7 @@ const sidebarMenuButtonVariants = cva(
       size: {
         // `pl-2` matches the container's own padding so icon-left is
         // 8 + 8 = 16px, dead centre of the 3rem collapsed rail.
-        default: "min-h-[34px] pl-2 pr-3 py-1.5 text-sm",
+        default: "min-h-[38px] pl-2 pr-3 py-1.5 text-sm",
         sm: "min-h-[28px] px-2 py-1 text-xs",
         lg: "group-data-[collapsible=icon]:p-0! h-12 px-3 text-sm",
       },
