@@ -37,6 +37,8 @@ export {
   PresentationTitle as Title,
   PresentationActions as Actions,
   usePresentation,
+  PresentationScope,
+  AtRootLevel,
   NavBar,
   type NavBarProps,
   type PresentationContextValue,

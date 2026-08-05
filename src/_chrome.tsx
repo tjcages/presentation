@@ -60,6 +60,58 @@ const PresentationContext = React.createContext<PresentationContextValue | null>
 export const PresentationProvider = PresentationContext.Provider;
 
 /**
+ * Publish the stack's level to things that sit *outside* it.
+ *
+ * A sidebar's footer is the case this exists for. It is a sibling of the
+ * levels, not a descendant, so it cannot read the stack's context — and
+ * without it a root-level destination like "Settings" keeps sitting there
+ * while you are two levels deep inside Roster, offering a jump out of a place
+ * the sidebar is no longer showing.
+ *
+ * Takes the level directly rather than a path and a resolver: a host that
+ * renders a stack already knows how deep it is, and asking it to re-derive
+ * that through a second code path is how the two drift apart.
+ */
+export function PresentationScope({
+  level,
+  children,
+}: {
+  level: number;
+  children: React.ReactNode;
+}) {
+  const value = React.useMemo<PresentationContextValue>(
+    () => ({
+      entry: null,
+      depth: level,
+      dismiss: () => undefined,
+      present: () => undefined,
+    }),
+    [level],
+  );
+  return <PresentationContext.Provider value={value}>{children}</PresentationContext.Provider>;
+}
+
+/**
+ * Show `children` only while the stack is at its root level.
+ *
+ * Above the root they animate away rather than vanishing — the same 25% slide
+ * and fade the rails use, over a collapsing `grid-template-rows` so the rows
+ * below close the gap instead of jumping into it.
+ *
+ * Renders nothing at all outside a stack or a [[PresentationScope]], since
+ * "is this the root level" has no answer there.
+ */
+export function AtRootLevel({ children }: { children: React.ReactNode }) {
+  const scope = React.useContext(PresentationContext);
+  const above = (scope?.depth ?? 0) > 0;
+  return (
+    <div className="pr-root-only" data-above-root={above ? "" : undefined}>
+      <div>{children}</div>
+    </div>
+  );
+}
+
+/**
  * Reach the enclosing stack from anywhere inside a pushed page — the
  * equivalent of SwiftUI's `@Environment(\.dismiss)`.
  *

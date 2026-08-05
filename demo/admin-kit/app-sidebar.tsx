@@ -4,7 +4,12 @@ import * as React from "react";
 import { ChevronLeft, ChevronRight, LayoutLeft, Star01 } from "@untitledui/icons";
 import { AnimatePresence, motion } from "framer-motion";
 
-import { Presentation, type StackEntry } from "@tjcages/presentation";
+import {
+  AtRootLevel,
+  Presentation,
+  PresentationScope,
+  type StackEntry,
+} from "@tjcages/presentation";
 
 import type { NavConfig, NavGroup, NavItem } from "./types";
 import { isNavItemActive, useAdminKit } from "./context";
@@ -305,6 +310,9 @@ export function AppSidebar({
   const useStack = state === "expanded" && !isMobile;
 
   return (
+    // Publishes the pushed-level depth to the footer, which is a sibling of
+    // the levels rather than a descendant and so cannot read it otherwise.
+    <PresentationScope level={sidebarScreens?.length ?? 0}>
     <Sidebar collapsible="icon">
       {brand && <SidebarHeader className="p-0">{brand}</SidebarHeader>}
 
@@ -327,6 +335,7 @@ export function AppSidebar({
       <SidebarFooter className="px-3.5 pb-4 group-data-[collapsible=icon]:px-2">
         <div className="flex w-full flex-col">
           {nav.footer && nav.footer.length > 0 && (
+            <AtRootLevel>
             <SidebarMenu className="**:data-[sidebar=menu-button]:gap-3">
               {/* When a footer item *is* the current page, slide it out — the
                   pushed sidebar screen has already taken over the main rail,
@@ -349,6 +358,7 @@ export function AppSidebar({
                   ))}
               </AnimatePresence>
             </SidebarMenu>
+            </AtRootLevel>
           )}
           <CollapseButton />
         </div>
@@ -356,6 +366,7 @@ export function AppSidebar({
 
       <SidebarResizeHandle />
     </Sidebar>
+    </PresentationScope>
   );
 }
 

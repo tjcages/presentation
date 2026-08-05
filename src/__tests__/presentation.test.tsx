@@ -3,7 +3,7 @@ import type * as React from "react";
 import { describe, expect, it, vi } from "vitest";
 
 import { Presentation } from "../_presentation";
-import { PresentationTitle, usePresentation } from "../_chrome";
+import { AtRootLevel, PresentationScope, PresentationTitle, usePresentation } from "../_chrome";
 import { createResolver } from "../_resolve";
 
 const resolve = createResolver({
@@ -174,6 +174,47 @@ describe("<Presentation> — direction and presence", () => {
     view.rerender(<Stack path="/settings/appearance">appearance</Stack>);
     const leaving = pick(view.container, '.pr-level[data-state="exit"]');
     expect(leaving.hasAttribute("inert")).toBe(true);
+  });
+});
+
+describe("<AtRootLevel>", () => {
+  /**
+   * A root-level destination sitting in a sidebar footer while you are two
+   * levels deep inside another area offers a jump out of a place the sidebar
+   * is no longer showing. It belongs to the root level, so it goes when the
+   * root level does.
+   */
+  it("shows its children at the root level and hides them above it", () => {
+    const atRoot = render(
+      <PresentationScope level={0}>
+        <AtRootLevel>
+          <a href="/settings">Settings</a>
+        </AtRootLevel>
+      </PresentationScope>,
+    );
+    expect(pick(atRoot.container, ".pr-root-only").hasAttribute("data-above-root")).toBe(false);
+    atRoot.unmount();
+
+    const pushed = render(
+      <PresentationScope level={1}>
+        <AtRootLevel>
+          <a href="/settings">Settings</a>
+        </AtRootLevel>
+      </PresentationScope>,
+    );
+    expect(pick(pushed.container, ".pr-root-only").hasAttribute("data-above-root")).toBe(true);
+  });
+
+  it("keeps the children mounted so they animate away rather than vanish", () => {
+    const view = render(
+      <PresentationScope level={2}>
+        <AtRootLevel>
+          <a href="/settings">Settings</a>
+        </AtRootLevel>
+      </PresentationScope>,
+    );
+    // Present in the DOM, collapsed by CSS — an unmount would cut the motion.
+    expect(view.container.querySelector('a[href="/settings"]')).toBeTruthy();
   });
 });
 
