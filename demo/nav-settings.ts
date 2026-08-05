@@ -45,7 +45,7 @@ export const SETTINGS_NAV: SettingsNavGroup[] = [
         ],
       },
       {
-        id: "access", label: "Access", to: "/settings/access", icon: Lock01,
+        id: "access", label: "Access", to: "/settings/access", icon: Lock01, pushes: true,
         description: "People, roles & permissions",
         keywords: [
           { label: "Members", anchor: "people" },

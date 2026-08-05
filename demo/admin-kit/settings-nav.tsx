@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { SearchMd, XClose } from "@untitledui/icons";
+import { ChevronRight, SearchMd, XClose } from "@untitledui/icons";
 
 import { isNavItemActive, useAdminKit } from "./context";
 import { cn } from "./lib/cn";
@@ -44,6 +44,12 @@ export interface SettingsNavItem {
    * the recap address" working and not.
    */
   keywords?: SettingsNavKeyword[];
+  /**
+   * This row opens a sidebar level of its own. Renders a trailing chevron so
+   * a row that replaces the sidebar is distinguishable from one that only
+   * replaces the page.
+   */
+  pushes?: boolean;
   /** Opaque permission tag — see `NavItem.capability`. The host filters. */
   capability?: string;
 }
@@ -284,6 +290,12 @@ function SettingsNavGroupRows({
                 <Link to={item.to} end={item.end} onClick={onNavigate}>
                   {Icon ? <Icon /> : null}
                   <span>{highlightMatch(item.label, query)}</span>
+                  {item.pushes ? (
+                    <ChevronRight
+                      aria-hidden
+                      className="text-foreground-300/60 group-hover/menu-button:text-foreground-300 ml-auto size-3.5! shrink-0 transition-opacity duration-150 delay-100 group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:duration-100 group-data-[collapsible=icon]:delay-0"
+                    />
+                  ) : null}
                 </Link>
               </SidebarMenuButton>
 

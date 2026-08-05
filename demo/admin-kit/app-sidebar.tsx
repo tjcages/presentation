@@ -43,6 +43,24 @@ import {
   useSidebar,
 } from "./primitives/sidebar";
 
+/**
+ * The mark on a row that opens a level of its own rather than a page.
+ *
+ * Two rows that look identical can behave completely differently — one
+ * replaces the page, the other replaces the sidebar as well — and nothing
+ * distinguished them until you clicked. Deliberately quiet: `foreground-300`
+ * at 60%, a size below the row's own icon, and it brightens on hover with the
+ * rest of the row.
+ */
+function PushAffordance() {
+  return (
+    <ChevronRight
+      aria-hidden
+      className="text-foreground-300/60 group-hover/menu-button:text-foreground-300 ml-auto size-3.5! shrink-0 transition-opacity duration-150 delay-100 group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:duration-100 group-data-[collapsible=icon]:delay-0"
+    />
+  );
+}
+
 /** Path-based active check shared by nav rows, the footer, and group auto-expand. */
 function isItemActive(item: NavItem, pathname: string): boolean {
   return (
@@ -69,6 +87,7 @@ function NavMenuItem({ item }: { item: NavItem }) {
         <Link to={item.to} end={item.end}>
           {item.iconNode ?? (item.icon ? <item.icon /> : null)}
           <span>{item.title}</span>
+          {item.pushes ? <PushAffordance /> : null}
         </Link>
       </SidebarMenuButton>
       <FavoriteAction item={item} />
@@ -463,7 +482,11 @@ function BackButton({ label, onClick }: { label: string; onClick: () => void }) 
       title={label}
       className={cn(
         "text-foreground-300 hover:text-foreground-100 hover:bg-sidebar-accent",
-        "mb-1 flex min-h-[38px] w-full min-w-0 items-center gap-3 rounded-lg py-1.5 pl-2 pr-3 text-sm font-medium",
+        // gap-1.5, not the rows' gap-3: a back chevron belongs to the word after
+        // it, and the 12px that reads as deliberate between an icon and its
+        // label reads as a gap when the glyph is pointing at the text. Scales
+        // admin's 4px-against-16px to the 20px glyph.
+        "mb-1 flex min-h-[38px] w-full min-w-0 items-center gap-1.5 rounded-lg py-1.5 pl-2 pr-3 text-sm font-medium",
         "transition-[color,background-color] duration-150",
         "[&>svg]:size-5 [&>svg]:shrink-0",
         "group-data-[collapsible=icon]:pr-2!",

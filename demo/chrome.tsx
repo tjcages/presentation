@@ -26,13 +26,32 @@ import { BrandMark } from "./admin-kit/branding";
 import { SettingsNav } from "./admin-kit/settings-nav";
 import { cn } from "./admin-kit/lib/cn";
 import type { AdminKitLinkProps } from "./admin-kit/context";
-import type { NavConfig } from "./admin-kit/types";
+import type { NavConfig, NavItem } from "./admin-kit/types";
 import { SETTINGS_NAV } from "./nav-settings";
 import { SectionLevelNav } from "./sidebar-sections";
 import { findSectionLevel, findSettingsSubLevel } from "./sections";
 
+/**
+ * Which destinations open a sidebar level rather than just a page.
+ *
+ * Read off the registries, not hand-flagged: a level added to SECTION_LEVELS
+ * marks its row automatically, and a row can never claim to push something
+ * that does not exist.
+ */
+function pushesALevel(to: string): boolean {
+  return Boolean(findSectionLevel(to) || findSettingsSubLevel(to) || to === "/settings");
+}
+
+function withPushFlags(config: NavConfig): NavConfig {
+  const mark = (item: NavItem) => ({ ...item, pushes: pushesALevel(item.to) });
+  return {
+    groups: config.groups.map((g) => ({ ...g, items: g.items.map(mark) })),
+    footer: config.footer?.map(mark),
+  };
+}
+
 /** `apps/admin/src/nav.ts`. */
-export const NAV: NavConfig = {
+const BASE_NAV: NavConfig = {
   groups: [
     {
       label: "Workspace",
@@ -53,6 +72,8 @@ export const NAV: NavConfig = {
   ],
   footer: [{ title: "Settings", to: "/settings", icon: Settings01 }],
 };
+
+export const NAV: NavConfig = withPushFlags(BASE_NAV);
 
 const USER = { name: "Tyler J. Cagle", email: "ty@audiophysical.com" };
 

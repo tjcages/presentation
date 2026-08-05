@@ -34,6 +34,12 @@ export interface NavItem {
   favorite?: FavoriteRef;
   sortableId?: string;
   /**
+   * This destination opens a sidebar level of its own, not just a page.
+   * Renders a trailing chevron so the two are distinguishable before the
+   * click. The host sets it — only the host knows which routes push.
+   */
+  pushes?: boolean;
+  /**
    * Opaque permission tag. The kit never reads it — the host filters the
    * config before handing it over, because only the host knows what its
    * capability strings mean. It lives on the item so the destination and the
