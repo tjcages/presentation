@@ -29,7 +29,7 @@ import type { AdminKitLinkProps } from "./admin-kit/context";
 import type { NavConfig } from "./admin-kit/types";
 import { SETTINGS_NAV } from "./nav-settings";
 import { SectionLevelNav } from "./sidebar-sections";
-import { findSettingsSubLevel } from "./sections";
+import { findSectionLevel, findSettingsSubLevel } from "./sections";
 
 /** `apps/admin/src/nav.ts`. */
 export const NAV: NavConfig = {
@@ -95,11 +95,13 @@ function SidebarProfileRow() {
 
 export function AppChrome({
   pathname,
+  search,
   navigate,
   Link,
   children,
 }: {
   pathname: string;
+  search: string;
   navigate: (to: string) => void;
   Link: React.ComponentType<AdminKitLinkProps>;
   children: React.ReactNode;
@@ -115,32 +117,48 @@ export function AppChrome({
     onSidebarBack?: () => void;
     sidebarBackLabel?: string;
   } => {
-    if (!pathname.startsWith("/settings")) return {};
+    if (pathname.startsWith("/settings")) {
+      const screens: NavStackScreen[] = [
+        { id: "app-settings", left: <SettingsNav groups={SETTINGS_NAV} />, right: null },
+      ];
 
-    const screens: NavStackScreen[] = [
-      { id: "app-settings", left: <SettingsNav groups={SETTINGS_NAV} />, right: null },
-    ];
+      const subLevel = findSettingsSubLevel(pathname);
+      if (subLevel) {
+        screens.push({
+          id: subLevel.basePath,
+          left: <SectionLevelNav level={subLevel} search={search} />,
+          right: null,
+        });
+        return {
+          sidebarScreens: screens,
+          onSidebarBack: () => navigate("/settings"),
+          sidebarBackLabel: "Settings",
+        };
+      }
 
-    const subLevel = findSettingsSubLevel(pathname);
-    if (subLevel) {
-      screens.push({
-        id: subLevel.basePath,
-        left: <SectionLevelNav level={subLevel} />,
-        right: null,
-      });
       return {
         sidebarScreens: screens,
-        onSidebarBack: () => navigate("/settings"),
-        sidebarBackLabel: "Settings",
+        onSidebarBack: () => navigate("/"),
+        sidebarBackLabel: "Albums",
       };
     }
 
-    return {
-      sidebarScreens: screens,
-      onSidebarBack: () => navigate("/"),
-      sidebarBackLabel: "Albums",
-    };
-  }, [pathname, navigate]);
+    // Registered areas (Roster, Labels) push their own level, so their pages
+    // live in the sidebar instead of as extra rows in the flat root nav. One
+    // lookup, no if-chain — see SECTION_LEVELS.
+    const level = findSectionLevel(pathname);
+    if (level) {
+      return {
+        sidebarScreens: [
+          { id: level.basePath, left: <SectionLevelNav level={level} search={search} />, right: null },
+        ],
+        onSidebarBack: () => navigate("/"),
+        sidebarBackLabel: "Albums",
+      };
+    }
+
+    return {};
+  }, [pathname, search, navigate]);
 
   return (
     <AppShell

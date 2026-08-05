@@ -27,6 +27,7 @@ import {
   SettingsShell,
   cn,
 } from "./kit";
+import { activeSectionId, findSectionLevel } from "./sections";
 
 /* ── General ─────────────────────────────────────────────────────────────── */
 
@@ -447,59 +448,68 @@ export function AccessPage({ section }: { section: AccessSection }) {
 }
 
 
-/* ── The root nav's destinations ─────────────────────────────────────────── */
+/* ── Every other destination, derived from the registry ─────────────────── */
 
 /**
- * Every `to` in `NAV` needs a page, or its row is a dead link — and the
- * sidebar's "Albums" back affordance is a button that leaves you where you
- * were. These are faked, on the standard frame: `SettingsShell` is just
- * `PageShell` + `PageHeader`, which is what every page in the app sits on.
+ * A page for every row the sidebar can show.
+ *
+ * Derived from `SECTION_LEVELS` rather than hand-listed, because hand-listing
+ * is how rows end up pointing at nothing: each time a level gained a section I
+ * had to remember to add its page, and did not. Now a section cannot exist
+ * without a page — they come from the same array.
  */
-const ROOT_PAGES: Record<string, { title: string; description: string; card: string; body: string }> = {
-  "/": {
-    title: "Albums",
-    description: "Every release in the catalog.",
-    card: "Catalog",
-    body: "Nothing here — this page is a stand-in so the nav row and the sidebar's back affordance both lead somewhere real.",
-  },
-  "/analytics": {
-    title: "Analytics",
-    description: "Plays, activations, and territory breakdowns.",
-    card: "Overview",
-    body: "Stand-in page.",
-  },
-  "/crm": {
-    title: "Roster",
-    description: "Contacts, threads, and deals.",
-    card: "Directory",
-    body: "Stand-in page.",
-  },
-  "/pricing": {
-    title: "Labels",
-    description: "Label admin and the pricing calculator.",
-    card: "Labels",
-    body: "Stand-in page.",
-  },
-  "/policies": {
-    title: "Policies",
-    description: "Published policy documents.",
-    card: "Documents",
-    body: "Stand-in page.",
-  },
+const ROOT_PAGES: Record<string, { title: string; description: string }> = {
+  "/": { title: "Albums", description: "Every release in the catalog." },
+  "/analytics": { title: "Analytics", description: "Plays, activations, and territory breakdowns." },
+  "/policies": { title: "Policies", description: "Published policy documents." },
 };
 
-export function isRootPage(path: string): boolean {
-  return path in ROOT_PAGES;
-}
-
-export function RootPage({ path }: { path: string }) {
-  const page = ROOT_PAGES[path];
-  if (!page) return null;
+function Placeholder({ title, description, note }: { title: string; description: string; note: string }) {
   return (
-    <SettingsShell title={page.title} description={page.description}>
-      <SettingsCard title={page.card}>
-        <p className="text-foreground-300 text-sm">{page.body}</p>
+    <SettingsShell title={title} description={description}>
+      <SettingsCard title={title}>
+        <p className="text-foreground-300 text-sm">{note}</p>
       </SettingsCard>
     </SettingsShell>
   );
+}
+
+/** Does any non-settings route own this path? */
+export function resolveAreaPage(
+  pathname: string,
+  search: string,
+): React.ReactElement | null {
+  const level = findSectionLevel(pathname);
+  if (level) {
+    const param = level.param ?? "tab";
+    const id = activeSectionId(
+      level.sections,
+      pathname,
+      new URLSearchParams(search),
+      level.basePath,
+      param,
+      level.defaultSection,
+    );
+    const section = level.sections.find((s) => s.id === id);
+    return (
+      <Placeholder
+        title={section?.label ?? level.title}
+        description={`${level.title}${section ? ` · ${section.label}` : ""}`}
+        note="Stand-in page — the navigation around it is the real thing."
+      />
+    );
+  }
+
+  const root = ROOT_PAGES[pathname];
+  if (root) {
+    return (
+      <Placeholder
+        title={root.title}
+        description={root.description}
+        note="Stand-in page — the navigation around it is the real thing."
+      />
+    );
+  }
+
+  return null;
 }

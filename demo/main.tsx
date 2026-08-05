@@ -35,8 +35,7 @@ import {
   ModelsPage,
   NavigationPage,
   PricingPage,
-  RootPage,
-  isRootPage,
+  resolveAreaPage,
   toAccessSection,
   type AccessSection,
 } from "./pages";
@@ -121,7 +120,7 @@ const resolve = createResolver({
   subLevels: [{ basePath: "/settings/access", title: "Access" }],
 });
 
-function Screen({ path, section }: { path: string; section: AccessSection }) {
+function Screen({ path, search, section }: { path: string; search: string; section: AccessSection }) {
   switch (path) {
     case "/settings": return <GeneralPage />;
     case "/settings/appearance": return <AppearancePage />;
@@ -131,12 +130,12 @@ function Screen({ path, section }: { path: string; section: AccessSection }) {
     case "/settings/models": return <ModelsPage />;
     case "/settings/integrations": return <IntegrationsPage />;
     default:
-      return isRootPage(path) ? (
-        <RootPage path={path} />
-      ) : (
-        <SettingsShell title="Not found" description={path}>
-          <span />
-        </SettingsShell>
+      return (
+        resolveAreaPage(path, search) ?? (
+          <SettingsShell title="Not found" description={path}>
+            <span />
+          </SettingsShell>
+        )
       );
   }
 }
@@ -171,7 +170,7 @@ function App() {
         </select>
       </div>
 
-      <AppChrome pathname={path} navigate={navigate} Link={Link}>
+      <AppChrome pathname={path} search={search} navigate={navigate} Link={Link}>
         <Presentation
           path={path}
           navigate={navigate}
@@ -179,7 +178,7 @@ function App() {
           present={spec}
           bar={false}
         >
-          <Screen path={path} section={section} />
+          <Screen path={path} search={search} section={section} />
         </Presentation>
       </AppChrome>
     </NavigateContext.Provider>

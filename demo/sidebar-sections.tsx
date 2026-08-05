@@ -11,37 +11,69 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "./admin-kit/primitives/sidebar";
-import { sectionHref } from "./sections";
+import { activeSectionId, sectionHref } from "./sections";
 
-function SectionsMenu({ level, activeId }: { level: SectionLevel; activeId: string }) {
-  const { Link } = useAdminKit();
+export function SectionsMenu({
+  level,
+  search,
+}: {
+  level: SectionLevel;
+  search: URLSearchParams;
+}) {
+  const { Link, pathname } = useAdminKit();
+  const param = level.param ?? "tab";
+  const activeId = activeSectionId(
+    level.sections,
+    pathname,
+    search,
+    level.basePath,
+    param,
+    level.defaultSection,
+  );
+
   return (
     <div className="flex flex-col gap-1">
       <SidebarGroupLabel className="text-foreground-300/70 flex items-center gap-1 pr-1">
         <span className="min-w-0 flex-1 truncate">{level.title}</span>
       </SidebarGroupLabel>
       <SidebarMenu className="**:data-[sidebar=menu-button]:gap-3">
-        {level.sections.map((section) => (
-          <SidebarMenuItem key={section.id}>
-            <SidebarMenuButton asChild isActive={section.id === activeId} tooltip={section.label}>
-              <Link to={sectionHref(level, section.id)}>
-                <section.icon />
-                <span>{section.label}</span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
+        {level.sections.map((section, i) => (
+          <React.Fragment key={section.id}>
+            {/* A sub-heading starts a run of related rows — the workspace
+                lenses read as views of one thing, not as separate pages. */}
+            {section.group && section.group !== level.sections[i - 1]?.group && (
+              <SidebarGroupLabel className="text-foreground-300/70 mt-2 group-data-[collapsible=icon]:hidden">
+                <span className="min-w-0 flex-1 truncate">{section.group}</span>
+              </SidebarGroupLabel>
+            )}
+            <SidebarMenuItem>
+              <SidebarMenuButton
+                asChild
+                isActive={section.id === activeId}
+                tooltip={section.label}
+              >
+                <Link
+                  to={sectionHref(section, level.basePath, param, level.defaultSection)}
+                >
+                  <section.icon />
+                  <span>{section.label}</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </React.Fragment>
         ))}
       </SidebarMenu>
     </div>
   );
 }
 
-/** Pushed sidebar level for a registered area. */
-export function SectionLevelNav({ level }: { level: SectionLevel }) {
-  const { pathname } = useAdminKit();
-  const search = typeof window === "undefined" ? "" : window.location.search;
-  const raw = new URLSearchParams(search).get(level.param ?? "tab");
-  const activeId = level.sections.some((s) => s.id === raw) ? raw! : level.defaultSection;
-  void pathname;
-  return <SectionsMenu level={level} activeId={activeId} />;
+/** Pushed sidebar level for a registered area (Roster, Labels, Access). */
+export function SectionLevelNav({
+  level,
+  search,
+}: {
+  level: SectionLevel;
+  search: string;
+}) {
+  return <SectionsMenu level={level} search={new URLSearchParams(search)} />;
 }
