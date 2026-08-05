@@ -1,0 +1,21 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "presentation-demo",
+  "compatibility_date": "2026-08-04",
+
+  /*
+   * A static build, served straight off the edge — there is no server here.
+   *
+   * `single-page-application` is the part that matters: the demo's router is
+   * `history.pushState`, so /crm and /settings/access exist only in the
+   * client. Without it the edge would look for those files, not find them,
+   * and return 404 to anyone who opened a link rather than clicking their way
+   * in — which is exactly what testing on a phone does.
+   */
+  "assets": {
+    "directory": "./demo/dist",
+    "not_found_handling": "single-page-application"
+  },
+
+  "observability": { "enabled": true }
+}

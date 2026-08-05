@@ -165,3 +165,20 @@ default. Nothing hardcodes a palette. Override from your own theme:
 | `bar` | `false` suppresses the built-in bar. |
 | `swipe` | Default `true`. |
 | `restoreScroll` | Default `true`. |
+
+## Demo
+
+<https://presentation-demo.ty-944.workers.dev>
+
+A reproduction of Totem admin's sidebar and settings area, driven by this
+package. Deploy it with:
+
+```bash
+pnpm demo:deploy
+```
+
+Static assets on Cloudflare Workers. `not_found_handling:
+"single-page-application"` is load-bearing — the demo routes with
+`history.pushState`, so paths like `/crm` and `/settings/access` exist only in
+the client. Without it the edge 404s anyone who opens a link instead of
+clicking their way in, which is exactly what testing on a phone does.
