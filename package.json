@@ -1,6 +1,6 @@
 {
   "name": "@tjcages/presentation",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "URL-derived push/pop presentation — iOS-style page pushing on mobile, synced rails on desktop. Router-free, zero runtime dependencies.",
   "type": "module",
   "main": "./dist/index.js",

@@ -77,7 +77,22 @@ export interface PresentationProps {
   swipe?: boolean;
   /** Restore each level's scroll position when it is returned to. @default true */
   restoreScroll?: boolean;
+  /**
+   * Optional sound adapter. The package never imports an audio library; hosts
+   * decide whether and how each URL-derived transition should sound.
+   */
+  onSound?: (
+    cue: PresentationSoundCue,
+    movement: PresentationSoundMovement,
+  ) => void;
   className?: string;
+}
+
+export type PresentationSoundCue = "push" | "pop" | "change";
+
+export interface PresentationSoundMovement {
+  from: StackEntry;
+  to: StackEntry;
 }
 
 /** Distance in px from the leading edge where a back swipe may begin. */
@@ -95,6 +110,7 @@ export function Presentation({
   rail,
   swipe = true,
   restoreScroll = true,
+  onSound,
   className,
 }: PresentationProps) {
   const entry = resolve(path);
@@ -138,6 +154,8 @@ export function Presentation({
     : track.dir;
   if (moved) setTrack({ path, depth, level, dir, sameLevel });
   const direction = dir >= 0 ? "forward" : "back";
+
+  useTransitionSound(entry, onSound);
 
   const { entries, release } = usePresence(path, children);
   const recall = useLevelMemory(depth, children);
@@ -277,6 +295,27 @@ export function Presentation({
       </div>
     </PresentationProvider>
   );
+}
+
+function useTransitionSound(
+  entry: StackEntry | null,
+  onSound: PresentationProps["onSound"],
+) {
+  const previous = React.useRef(entry);
+
+  React.useEffect(() => {
+    const from = previous.current;
+    previous.current = entry;
+    if (!from || !entry || from.path === entry.path) return;
+
+    const cue =
+      entry.depth > from.depth
+        ? "push"
+        : entry.depth < from.depth
+          ? "pop"
+          : "change";
+    onSound?.(cue, { from, to: entry });
+  }, [entry, onSound]);
 }
 
 function Level({

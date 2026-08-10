@@ -31,7 +31,12 @@
  * ```
  */
 
-export { Presentation, type PresentationProps } from "./_presentation.js";
+export {
+  Presentation,
+  type PresentationProps,
+  type PresentationSoundCue,
+  type PresentationSoundMovement,
+} from "./_presentation.js";
 
 export {
   PresentationTitle as Title,

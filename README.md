@@ -186,6 +186,25 @@ output leaks into the package.
 | `bar`           | `false` suppresses the built-in bar.                    |
 | `swipe`         | Default `true`.                                         |
 | `restoreScroll` | Default `true`.                                         |
+| `onSound`       | Optional `push` / `pop` / `change` sound adapter.       |
+
+## Optional sounds
+
+Presentation has no audio dependency. Supply `onSound` to connect the sound
+system your app already uses:
+
+```tsx
+<Presentation
+  {...props}
+  onSound={(cue) => {
+    sounds.play(cue === "pop" ? "dismiss" : "navigation");
+  }}
+/>
+```
+
+An audio library remains an app-level choice. For example, a host that already
+uses `cuelume` can pass `play` through the same callback; apps that omit
+`onSound` ship no sound code from this package.
 
 ## Demo
 

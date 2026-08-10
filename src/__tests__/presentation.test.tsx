@@ -103,6 +103,97 @@ describe("<Presentation>", () => {
 });
 
 describe("<Presentation> — direction and presence", () => {
+  it("offers transition sounds without requiring an audio library", async () => {
+    const onSound = vi.fn();
+    const view = render(
+      <Stack path="/settings" onSound={onSound}>
+        general
+      </Stack>,
+    );
+    await settle();
+    expect(onSound).not.toHaveBeenCalled();
+
+    view.rerender(
+      <Stack path="/settings/access" onSound={onSound}>
+        access
+      </Stack>,
+    );
+    await settle();
+    expect(onSound).toHaveBeenLastCalledWith(
+      "push",
+      expect.objectContaining({
+        from: expect.objectContaining({ path: "/settings" }),
+        to: expect.objectContaining({ path: "/settings/access" }),
+      }),
+    );
+
+    view.rerender(
+      <Stack path="/settings/access/roles" onSound={onSound}>
+        roles
+      </Stack>,
+    );
+    await settle();
+    expect(onSound).toHaveBeenLastCalledWith(
+      "push",
+      expect.objectContaining({
+        from: expect.objectContaining({ path: "/settings/access" }),
+        to: expect.objectContaining({ path: "/settings/access/roles" }),
+      }),
+    );
+
+    view.rerender(
+      <Stack path="/settings/access" onSound={onSound}>
+        access
+      </Stack>,
+    );
+    await settle();
+    expect(onSound).toHaveBeenLastCalledWith(
+      "pop",
+      expect.objectContaining({
+        from: expect.objectContaining({ path: "/settings/access/roles" }),
+        to: expect.objectContaining({ path: "/settings/access" }),
+      }),
+    );
+  });
+
+  it("distinguishes a same-depth route change from a push or pop", async () => {
+    const onSound = vi.fn();
+    const view = render(
+      <Stack path="/settings" onSound={onSound}>
+        general
+      </Stack>,
+    );
+    await settle();
+    view.rerender(
+      <Stack path="/settings/appearance" onSound={onSound}>
+        appearance
+      </Stack>,
+    );
+    await settle();
+
+    expect(onSound).toHaveBeenLastCalledWith(
+      "push",
+      expect.objectContaining({
+        from: expect.objectContaining({ path: "/settings" }),
+        to: expect.objectContaining({ path: "/settings/appearance" }),
+      }),
+    );
+
+    view.rerender(
+      <Stack path="/settings/access" onSound={onSound}>
+        access
+      </Stack>,
+    );
+    await settle();
+    expect(onSound).toHaveBeenLastCalledWith(
+      "change",
+      expect.objectContaining({
+        from: expect.objectContaining({ path: "/settings/appearance" }),
+        to: expect.objectContaining({ path: "/settings/access" }),
+      }),
+    );
+  });
+
   it("keeps the departing level on screen through the push", async () => {
     const view = render(<Stack path="/settings">root list</Stack>);
     await settle();
