@@ -119,7 +119,7 @@ function FavoriteAction({ item }: { item: NavItem }) {
         preferences.toggleFavorite(favorite);
       }}
       className={cn(
-        "text-sidebar-foreground hover:text-sidebar-accent-foreground ring-sidebar-ring outline-hidden flex size-7 shrink-0 items-center justify-center rounded-md transition-[color,opacity,scale] duration-150 focus-visible:ring-2 active:scale-[0.96] group-data-[collapsible=icon]:hidden",
+        "text-sidebar-foreground hover:text-sidebar-accent-foreground ring-sidebar-ring outline-hidden flex size-7 translate-x-1 shrink-0 items-center justify-center rounded-md transition-[color,opacity,scale] duration-150 focus-visible:ring-2 active:scale-[0.96] group-data-[collapsible=icon]:hidden",
         "group-focus-within/menu-item:opacity-100 group-hover/menu-item:opacity-100 md:opacity-0",
         favorited && "text-accent-100 opacity-100 md:opacity-100",
       )}
