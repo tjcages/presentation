@@ -31,7 +31,7 @@
  * ```
  */
 
-export { Presentation, type PresentationProps } from "./_presentation";
+export { Presentation, type PresentationProps } from "./_presentation.js";
 
 export {
   PresentationTitle as Title,
@@ -42,7 +42,7 @@ export {
   NavBar,
   type NavBarProps,
   type PresentationContextValue,
-} from "./_chrome";
+} from "./_chrome.js";
 
 export {
   createResolver,
@@ -57,9 +57,16 @@ export {
   type RouteDescriptor,
   type StackEntry,
   type StackLevel,
-} from "./_resolve";
+} from "./_resolve.js";
 
-export { SPRINGS, springEasing, FADE_MS, FADE_EASE, type Spring, type SpringEasing } from "./_springs";
+export {
+  SPRINGS,
+  springEasing,
+  FADE_MS,
+  FADE_EASE,
+  type Spring,
+  type SpringEasing,
+} from "./_springs.js";
 
 // Exported so a host can build a gesture on a surface this package does not
 // own — a drawer's grabber, a custom panel — with the same direction lock and
@@ -70,4 +77,4 @@ export {
   type BackGesture,
   type BackGestureConfig,
   type BackGestureIntent,
-} from "./_gesture";
+} from "./_gesture.js";

@@ -6,6 +6,15 @@ a desktop, a drawer for a single view — chosen per breakpoint, in CSS.
 Router-free: the host supplies the current path, a way to navigate, and a
 resolver saying where a path sits in the stack. No runtime dependencies.
 
+## Install
+
+```bash
+pnpm add @tjcages/presentation
+```
+
+React and React DOM 18 or newer are peer dependencies. Import the stylesheet
+once in the host application, as shown below.
+
 ```tsx
 import { Presentation, createResolver } from "@tjcages/presentation";
 import "@tjcages/presentation/presentation.css";
@@ -43,7 +52,7 @@ export default function Layout({ children }) {
 `/settings` is depth 0, `/settings/appearance` is 1, `/settings/access/roles`
 is 2. Nothing is held in state, so hardware back, the browser's own edge-swipe,
 and deep links all work without this package being told they happened. A link
-straight to depth 2 opens at depth 2, with a back affordance that goes *up* a
+straight to depth 2 opens at depth 2, with a back affordance that goes _up_ a
 level rather than out of the section.
 
 ## Presentation styles
@@ -61,10 +70,8 @@ no server-versus-client snapshot to guess wrong, and no reflow after
 hydration — the markup is byte-identical at every width, and only which
 keyframes apply changes. A resize or a rotate never remounts the page.
 
-`auto` reads the level's shape: a leaf — nothing nested beneath it — presents
-as a drawer, and a level you can push *through* presents as a push, so its back
-button keeps meaning "up one level" rather than "close". Leafness is derived
-from the `routes` list. Any level can override the stack:
+`auto` currently resolves to `push`, so every row in one navigation list opens
+the same way. A route can opt into another style explicitly:
 
 ```ts
 createResolver({
@@ -107,7 +114,9 @@ function RoleEditor({ role }) {
   return (
     <>
       <Title>{role.name}</Title>
-      <Actions><button onClick={dismiss}>Done</button></Actions>
+      <Actions>
+        <button onClick={dismiss}>Done</button>
+      </Actions>
       …
     </>
   );
@@ -148,23 +157,35 @@ default. Nothing hardcodes a palette. Override from your own theme:
   touch-down, at a request per aborted swipe.
 - **Scroll memory tracks the window scroller.** A level that scrolls inside its
   own container is not restored.
-- `rails` renders the same single column as `push` today; the two-rail split
-  layout is not built yet.
+- `drawer` supplies the motion style, but not sheet policy such as detents, a
+  scrim, or a drag-to-dismiss gesture. Hosts that opt into it own those details.
+
+## Development
+
+```bash
+pnpm install
+pnpm check
+pnpm demo
+```
+
+`pnpm check` runs the behavior suite, typecheck, production build, and a dry
+run of the exact npm tarball. The tarball check fails if demo or nested source
+output leaks into the package.
 
 ## API
 
-| Prop | |
-|---|---|
-| `path` | Current path, from the host router. |
-| `navigate` | `(path) => void`. Used by back and by a released swipe. |
-| `resolve` | `(path) => StackEntry \| null`. See `createResolver`. |
-| `children` | The level's content, from the host router. |
-| `present` | Style or breakpoint map. Default `"auto"`. |
-| `Link` | Host link component, so back is a real anchor. |
-| `renderBar` | Replace the default bar. Return `null` for none. |
-| `bar` | `false` suppresses the built-in bar. |
-| `swipe` | Default `true`. |
-| `restoreScroll` | Default `true`. |
+| Prop            |                                                         |
+| --------------- | ------------------------------------------------------- |
+| `path`          | Current path, from the host router.                     |
+| `navigate`      | `(path) => void`. Used by back and by a released swipe. |
+| `resolve`       | `(path) => StackEntry \| null`. See `createResolver`.   |
+| `children`      | The level's content, from the host router.              |
+| `present`       | Style or breakpoint map. Default `"auto"`.              |
+| `Link`          | Host link component, so back is a real anchor.          |
+| `renderBar`     | Replace the default bar. Return `null` for none.        |
+| `bar`           | `false` suppresses the built-in bar.                    |
+| `swipe`         | Default `true`.                                         |
+| `restoreScroll` | Default `true`.                                         |
 
 ## Demo
 

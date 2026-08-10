@@ -49,8 +49,11 @@ function pick(root: HTMLElement, selector: string): HTMLElement {
   return el;
 }
 
-/** jsdom runs no animations, so exits settle on the next microtask. */
-const settle = () => act(async () => { await Promise.resolve(); });
+/** jsdom runs no animations, so exits settle on the next effect turn. */
+const settle = () =>
+  act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  });
 
 describe("<Presentation>", () => {
   it("renders the level's content", () => {
@@ -128,6 +131,7 @@ describe("<Presentation> — direction and presence", () => {
     expect(
       view.container.querySelector('.pr-level[data-state="enter"]')?.getAttribute("data-direction"),
     ).toBe("back");
+    await settle();
   });
 
   it("flags a move inside one rail level so the rails presentation stays still", async () => {
@@ -140,6 +144,7 @@ describe("<Presentation> — direction and presence", () => {
     expect(
       pick(view.container, '.pr-level[data-state="enter"]').getAttribute("data-direction"),
     ).toBe("forward");
+    await settle();
   });
 
   /**
@@ -157,6 +162,7 @@ describe("<Presentation> — direction and presence", () => {
     expect(stack.hasAttribute("data-same-level")).toBe(true);
     // The rail keeps a single entry: nothing exits, nothing enters.
     expect(view.container.querySelectorAll(".pr-rail > .pr-level")).toHaveLength(1);
+    await settle();
   });
 
   it("does flag a real level change", async () => {
@@ -166,6 +172,7 @@ describe("<Presentation> — direction and presence", () => {
     const stack = pick(view.container, ".pr-stack");
     expect(stack.getAttribute("data-level")).toBe("1");
     expect(stack.hasAttribute("data-same-level")).toBe(false);
+    await settle();
   });
 
   it("makes the departing level inert so it cannot take focus or clicks", async () => {
@@ -174,6 +181,7 @@ describe("<Presentation> — direction and presence", () => {
     view.rerender(<Stack path="/settings/appearance">appearance</Stack>);
     const leaving = pick(view.container, '.pr-level[data-state="exit"]');
     expect(leaving.hasAttribute("inert")).toBe(true);
+    await settle();
   });
 });
 
