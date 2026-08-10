@@ -54,10 +54,12 @@ import {
  */
 function PushAffordance() {
   return (
-    <ChevronRight
+    <span
       aria-hidden
-      className="text-foreground-300/60 group-hover/menu-button:text-foreground-300 ml-auto size-3.5! shrink-0 transition-opacity duration-150 delay-100 group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:duration-100 group-data-[collapsible=icon]:delay-0"
-    />
+      className="text-foreground-300/60 group-hover/menu-item:text-foreground-300 flex h-[38px] w-7 shrink-0 items-center justify-center overflow-hidden transition-[width,opacity] delay-100 duration-150 group-data-[collapsible=icon]:w-0 group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:delay-0 group-data-[collapsible=icon]:duration-100"
+    >
+      <ChevronRight className="size-3.5!" />
+    </span>
   );
 }
 
@@ -76,18 +78,17 @@ function NavMenuItem({ item }: { item: NavItem }) {
   const { Link, pathname } = useAdminKit();
   const active = item.active ?? isItemActive(item, pathname);
   return (
-    <SidebarMenuItem className="flex items-center">
+    <SidebarMenuItem className="hover:bg-sidebar-accent focus-within:bg-sidebar-accent flex items-center rounded-lg transition-[background-color] duration-300 ease-out">
       <SidebarMenuButton
         asChild
         isActive={active}
         tooltip={item.title}
         variant={item.variant}
-        className="w-auto! flex-1"
+        className="w-auto! flex-1 hover:bg-transparent active:bg-transparent data-[state=open]:hover:bg-transparent"
       >
         <Link to={item.to} end={item.end}>
           {item.iconNode ?? (item.icon ? <item.icon /> : null)}
           <span>{item.title}</span>
-          {item.pushes ? <PushAffordance /> : null}
         </Link>
       </SidebarMenuButton>
       <FavoriteAction item={item} />
@@ -96,6 +97,7 @@ function NavMenuItem({ item }: { item: NavItem }) {
           {item.badge}
         </SidebarMenuBadge>
       )}
+      {item.pushes ? <PushAffordance /> : null}
     </SidebarMenuItem>
   );
 }
@@ -117,7 +119,7 @@ function FavoriteAction({ item }: { item: NavItem }) {
         preferences.toggleFavorite(favorite);
       }}
       className={cn(
-        "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ring-sidebar-ring outline-hidden flex h-[34px] w-8 shrink-0 items-center justify-center rounded-md transition-[color,opacity,scale] duration-150 focus-visible:ring-2 active:scale-[0.96] group-data-[collapsible=icon]:hidden",
+        "text-sidebar-foreground hover:text-sidebar-accent-foreground ring-sidebar-ring outline-hidden flex size-7 shrink-0 items-center justify-center rounded-md transition-[color,opacity,scale] duration-150 focus-visible:ring-2 active:scale-[0.96] group-data-[collapsible=icon]:hidden",
         "group-focus-within/menu-item:opacity-100 group-hover/menu-item:opacity-100 md:opacity-0",
         favorited && "text-accent-100 opacity-100 md:opacity-100",
       )}
