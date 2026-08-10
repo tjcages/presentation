@@ -18,15 +18,14 @@ import {
   BarSlots,
   ExitBoundary,
   NavBar,
-  PresentationProvider
-  
-} from "./_chrome";
-import type {PresentationContextValue} from "./_chrome";
-import { attachBackGesture, createBackGesture } from "./_gesture";
-import { useLevelMemory, usePresence, whenSettled } from "./_presence";
-import { resolvePresentation    } from "./_resolve";
-import type {PresentSpec, Resolver, StackEntry} from "./_resolve";
-import { SPRINGS, springEasing } from "./_springs";
+  PresentationProvider,
+} from "./_chrome.js";
+import type { PresentationContextValue } from "./_chrome.js";
+import { attachBackGesture, createBackGesture } from "./_gesture.js";
+import { useLevelMemory, usePresence, whenSettled } from "./_presence.js";
+import { resolvePresentation } from "./_resolve.js";
+import type { PresentSpec, Resolver, StackEntry } from "./_resolve.js";
+import { SPRINGS, springEasing } from "./_springs.js";
 
 export interface PresentationProps {
   /** Current path, from the host router. */
@@ -53,7 +52,10 @@ export interface PresentationProps {
   /** Host link component, so the back affordance is a real anchor. */
   Link?: React.ComponentProps<typeof NavBar>["Link"];
   /** Replace the default bar entirely. Return null for no bar. */
-  renderBar?: (entry: StackEntry, helpers: { back: () => void }) => React.ReactNode;
+  renderBar?: (
+    entry: StackEntry,
+    helpers: { back: () => void },
+  ) => React.ReactNode;
   /** Suppress the built-in bar without replacing it — for a host with its own chrome. */
   bar?: boolean;
   /**
@@ -75,7 +77,22 @@ export interface PresentationProps {
   swipe?: boolean;
   /** Restore each level's scroll position when it is returned to. @default true */
   restoreScroll?: boolean;
+  /**
+   * Optional sound adapter. The package never imports an audio library; hosts
+   * decide whether and how each URL-derived transition should sound.
+   */
+  onSound?: (
+    cue: PresentationSoundCue,
+    movement: PresentationSoundMovement,
+  ) => void;
   className?: string;
+}
+
+export type PresentationSoundCue = "push" | "pop" | "change";
+
+export interface PresentationSoundMovement {
+  from: StackEntry;
+  to: StackEntry;
 }
 
 /** Distance in px from the leading edge where a back swipe may begin. */
@@ -93,6 +110,7 @@ export function Presentation({
   rail,
   swipe = true,
   restoreScroll = true,
+  onSound,
   className,
 }: PresentationProps) {
   const entry = resolve(path);
@@ -136,6 +154,8 @@ export function Presentation({
     : track.dir;
   if (moved) setTrack({ path, depth, level, dir, sameLevel });
   const direction = dir >= 0 ? "forward" : "back";
+
+  useTransitionSound(entry, onSound);
 
   const { entries, release } = usePresence(path, children);
   const recall = useLevelMemory(depth, children);
@@ -227,48 +247,75 @@ export function Presentation({
         ) : null}
 
         {railOnly ? null : (
-        <div className="pr-pane">
-        {beneath !== undefined ? (
-          <div className="pr-level" data-role="beneath" aria-hidden="true">
-            <ExitBoundary>{beneath}</ExitBoundary>
-          </div>
-        ) : null}
-        {dragging ? <div className="pr-backdrop" /> : null}
+          <div className="pr-pane">
+            {beneath !== undefined ? (
+              <div className="pr-level" data-role="beneath" aria-hidden="true">
+                <ExitBoundary>{beneath}</ExitBoundary>
+              </div>
+            ) : null}
+            {dragging ? <div className="pr-backdrop" /> : null}
 
-        {entries.map((item) => {
-          const exiting = item.state === "exit";
-          const level = exiting ? resolve(item.key) : entry;
-          return (
-            <Level
-              key={item.key}
-              state={item.state}
-              direction={direction}
-              // zIndex by depth so the front level always covers the one
-              // behind, whichever way the stack is moving.
-              depth={level?.depth ?? depth}
-              onSettled={exiting ? () => release(item.key) : undefined}
-            >
-              {/*
-                * The slot provider wraps the bar *and* the page, because the
-                * page is where `<Presentation.Title>` lives and it needs a
-                * target to portal into.
-                */}
-              <BarSlots>
-                {bar && level?.parent
-                  ? renderBar
-                    ? renderBar(level, { back })
-                    : <NavBar entry={level} onBack={back} Link={Link} />
-                  : null}
-                {exiting ? <ExitBoundary>{item.value}</ExitBoundary> : item.value}
-              </BarSlots>
-            </Level>
-          );
-        })}
-        </div>
+            {entries.map((item) => {
+              const exiting = item.state === "exit";
+              const level = exiting ? resolve(item.key) : entry;
+              return (
+                <Level
+                  key={item.key}
+                  state={item.state}
+                  direction={direction}
+                  // zIndex by depth so the front level always covers the one
+                  // behind, whichever way the stack is moving.
+                  depth={level?.depth ?? depth}
+                  onSettled={exiting ? () => release(item.key) : undefined}
+                >
+                  {/*
+                   * The slot provider wraps the bar *and* the page, because the
+                   * page is where `<Presentation.Title>` lives and it needs a
+                   * target to portal into.
+                   */}
+                  <BarSlots>
+                    {bar && level?.parent ? (
+                      renderBar ? (
+                        renderBar(level, { back })
+                      ) : (
+                        <NavBar entry={level} onBack={back} Link={Link} />
+                      )
+                    ) : null}
+                    {exiting ? (
+                      <ExitBoundary>{item.value}</ExitBoundary>
+                    ) : (
+                      item.value
+                    )}
+                  </BarSlots>
+                </Level>
+              );
+            })}
+          </div>
         )}
       </div>
     </PresentationProvider>
   );
+}
+
+function useTransitionSound(
+  entry: StackEntry | null,
+  onSound: PresentationProps["onSound"],
+) {
+  const previous = React.useRef(entry);
+
+  React.useEffect(() => {
+    const from = previous.current;
+    previous.current = entry;
+    if (!from || !entry || from.path === entry.path) return;
+
+    const cue =
+      entry.depth > from.depth
+        ? "push"
+        : entry.depth < from.depth
+          ? "pop"
+          : "change";
+    onSound?.(cue, { from, to: entry });
+  }, [entry, onSound]);
 }
 
 function Level({
@@ -326,7 +373,11 @@ function Level({
  * list, open a row, come back, and you are at the top again with no idea where
  * you were. Only pops restore — arriving somewhere new should start at the top.
  */
-function useScrollMemory(path: string, direction: "forward" | "back", enabled: boolean) {
+function useScrollMemory(
+  path: string,
+  direction: "forward" | "back",
+  enabled: boolean,
+) {
   const positions = React.useRef(new Map<string, number>());
 
   React.useEffect(() => {
@@ -364,7 +415,10 @@ function useScrollMemory(path: string, direction: "forward" | "back", enabled: b
  * lurches. Pinning the taller of the two until the transition ends costs one
  * measurement and removes the jump.
  */
-function usePinnedHeight(ref: React.RefObject<HTMLDivElement | null>, overlapping: boolean) {
+function usePinnedHeight(
+  ref: React.RefObject<HTMLDivElement | null>,
+  overlapping: boolean,
+) {
   React.useLayoutEffect(() => {
     const element = ref.current;
     if (!element) return;
@@ -415,11 +469,17 @@ function useBackSwipe({
 
     let cleanupRelease: (() => void) | undefined;
 
-    const set = (prop: string, value: string) => stack.style.setProperty(prop, value);
+    const set = (prop: string, value: string) =>
+      stack.style.setProperty(prop, value);
     const clear = () => {
       stack.removeAttribute("data-dragging");
       stack.removeAttribute("data-releasing");
-      for (const prop of ["--pr-drag", "--pr-progress", "--pr-release-duration", "--pr-release-ease"]) {
+      for (const prop of [
+        "--pr-drag",
+        "--pr-progress",
+        "--pr-release-duration",
+        "--pr-release-ease",
+      ]) {
         stack.style.removeProperty(prop);
       }
       setDragging(false);
@@ -484,13 +544,18 @@ function useBackSwipe({
           return;
         }
         case "commit": {
-          settleTo(intent, { offset: stack.clientWidth, progress: 1 }, SPRINGS.commit, () => {
-            // The navigation lands while `data-dragging` still suppresses the
-            // keyframes, so the arriving level is already sitting at rest
-            // where the drag left it and does not re-animate from off-screen.
-            commitRef.current();
-            requestAnimationFrame(clear);
-          });
+          settleTo(
+            intent,
+            { offset: stack.clientWidth, progress: 1 },
+            SPRINGS.commit,
+            () => {
+              // The navigation lands while `data-dragging` still suppresses the
+              // keyframes, so the arriving level is already sitting at rest
+              // where the drag left it and does not re-animate from off-screen.
+              commitRef.current();
+              requestAnimationFrame(clear);
+            },
+          );
           return;
         }
         case "cancel": {

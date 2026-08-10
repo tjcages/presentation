@@ -16,7 +16,7 @@
 import * as React from "react";
 import { createPortal } from "react-dom";
 
-import type { StackEntry } from "./_resolve";
+import type { StackEntry } from "./_resolve.js";
 
 interface BarSlots {
   title: HTMLElement | null;
@@ -55,7 +55,8 @@ export interface PresentationContextValue {
   depth: number;
 }
 
-const PresentationContext = React.createContext<PresentationContextValue | null>(null);
+const PresentationContext =
+  React.createContext<PresentationContextValue | null>(null);
 
 export const PresentationProvider = PresentationContext.Provider;
 
@@ -88,7 +89,11 @@ export function PresentationScope({
     }),
     [level],
   );
-  return <PresentationContext.Provider value={value}>{children}</PresentationContext.Provider>;
+  return (
+    <PresentationContext.Provider value={value}>
+      {children}
+    </PresentationContext.Provider>
+  );
 }
 
 /**
@@ -122,7 +127,9 @@ export function AtRootLevel({ children }: { children: React.ReactNode }) {
 export function usePresentation(): PresentationContextValue {
   const value = React.useContext(PresentationContext);
   if (!value) {
-    throw new Error("usePresentation must be called inside a <Presentation> stack.");
+    throw new Error(
+      "usePresentation must be called inside a <Presentation> stack.",
+    );
   }
   return value;
 }
@@ -165,7 +172,12 @@ const ChevronLeft = (
  * screen reader as the destination it is, none of which a button that calls
  * `history.back()` can offer.
  */
-export function NavBar({ entry, onBack, Link, backIcon = ChevronLeft }: NavBarProps) {
+export function NavBar({
+  entry,
+  onBack,
+  Link,
+  backIcon = ChevronLeft,
+}: NavBarProps) {
   const slots = React.useContext(SlotContext);
   const parent = entry.parent;
   const label = (
@@ -176,38 +188,45 @@ export function NavBar({ entry, onBack, Link, backIcon = ChevronLeft }: NavBarPr
   );
 
   return (
-      <div className="pr-bar">
-        {parent ? (
-          Link ? (
-            <Link
-              href={parent.path}
-              className="pr-bar-back"
-              onClick={(e) => {
-                // Let the host router handle modified clicks and new tabs.
-                if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey) return;
-                e.preventDefault();
-                onBack();
-              }}
-            >
-              {label}
-            </Link>
-          ) : (
-            <button type="button" className="pr-bar-back" onClick={onBack}>
-              {label}
-            </button>
-          )
-        ) : null}
+    <div className="pr-bar">
+      {parent ? (
+        Link ? (
+          <Link
+            href={parent.path}
+            className="pr-bar-back"
+            onClick={(e) => {
+              // Let the host router handle modified clicks and new tabs.
+              if (e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey)
+                return;
+              e.preventDefault();
+              onBack();
+            }}
+          >
+            {label}
+          </Link>
+        ) : (
+          <button type="button" className="pr-bar-back" onClick={onBack}>
+            {label}
+          </button>
+        )
+      ) : null}
 
-        <span className="pr-bar-title" ref={slots?.setTitle}>
-          <span className="pr-bar-title-default">{entry.title}</span>
-        </span>
+      <span className="pr-bar-title" ref={slots?.setTitle}>
+        <span className="pr-bar-title-default">{entry.title}</span>
+      </span>
 
-        <span className="pr-bar-actions" ref={slots?.setActions} />
-      </div>
+      <span className="pr-bar-actions" ref={slots?.setActions} />
+    </div>
   );
 }
 
-function Slot({ pick, children }: { pick: "title" | "actions"; children: React.ReactNode }) {
+function Slot({
+  pick,
+  children,
+}: {
+  pick: "title" | "actions";
+  children: React.ReactNode;
+}) {
   const slots = React.useContext(SlotContext);
   const target = slots?.[pick] ?? null;
   // Null on the first render, before the bar's refs have attached; on a level
@@ -223,7 +242,11 @@ export function PresentationTitle({ children }: { children: React.ReactNode }) {
 }
 
 /** Put controls in the bar's trailing edge from inside the pushed page. */
-export function PresentationActions({ children }: { children: React.ReactNode }) {
+export function PresentationActions({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return <Slot pick="actions">{children}</Slot>;
 }
 

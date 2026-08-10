@@ -49,8 +49,11 @@ function pick(root: HTMLElement, selector: string): HTMLElement {
   return el;
 }
 
-/** jsdom runs no animations, so exits settle on the next microtask. */
-const settle = () => act(async () => { await Promise.resolve(); });
+/** jsdom runs no animations, so exits settle on the next effect turn. */
+const settle = () =>
+  act(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  });
 
 describe("<Presentation>", () => {
   it("renders the level's content", () => {
@@ -100,6 +103,97 @@ describe("<Presentation>", () => {
 });
 
 describe("<Presentation> — direction and presence", () => {
+  it("offers transition sounds without requiring an audio library", async () => {
+    const onSound = vi.fn();
+    const view = render(
+      <Stack path="/settings" onSound={onSound}>
+        general
+      </Stack>,
+    );
+    await settle();
+    expect(onSound).not.toHaveBeenCalled();
+
+    view.rerender(
+      <Stack path="/settings/access" onSound={onSound}>
+        access
+      </Stack>,
+    );
+    await settle();
+    expect(onSound).toHaveBeenLastCalledWith(
+      "push",
+      expect.objectContaining({
+        from: expect.objectContaining({ path: "/settings" }),
+        to: expect.objectContaining({ path: "/settings/access" }),
+      }),
+    );
+
+    view.rerender(
+      <Stack path="/settings/access/roles" onSound={onSound}>
+        roles
+      </Stack>,
+    );
+    await settle();
+    expect(onSound).toHaveBeenLastCalledWith(
+      "push",
+      expect.objectContaining({
+        from: expect.objectContaining({ path: "/settings/access" }),
+        to: expect.objectContaining({ path: "/settings/access/roles" }),
+      }),
+    );
+
+    view.rerender(
+      <Stack path="/settings/access" onSound={onSound}>
+        access
+      </Stack>,
+    );
+    await settle();
+    expect(onSound).toHaveBeenLastCalledWith(
+      "pop",
+      expect.objectContaining({
+        from: expect.objectContaining({ path: "/settings/access/roles" }),
+        to: expect.objectContaining({ path: "/settings/access" }),
+      }),
+    );
+  });
+
+  it("distinguishes a same-depth route change from a push or pop", async () => {
+    const onSound = vi.fn();
+    const view = render(
+      <Stack path="/settings" onSound={onSound}>
+        general
+      </Stack>,
+    );
+    await settle();
+    view.rerender(
+      <Stack path="/settings/appearance" onSound={onSound}>
+        appearance
+      </Stack>,
+    );
+    await settle();
+
+    expect(onSound).toHaveBeenLastCalledWith(
+      "push",
+      expect.objectContaining({
+        from: expect.objectContaining({ path: "/settings" }),
+        to: expect.objectContaining({ path: "/settings/appearance" }),
+      }),
+    );
+
+    view.rerender(
+      <Stack path="/settings/access" onSound={onSound}>
+        access
+      </Stack>,
+    );
+    await settle();
+    expect(onSound).toHaveBeenLastCalledWith(
+      "change",
+      expect.objectContaining({
+        from: expect.objectContaining({ path: "/settings/appearance" }),
+        to: expect.objectContaining({ path: "/settings/access" }),
+      }),
+    );
+  });
+
   it("keeps the departing level on screen through the push", async () => {
     const view = render(<Stack path="/settings">root list</Stack>);
     await settle();
@@ -128,6 +222,7 @@ describe("<Presentation> — direction and presence", () => {
     expect(
       view.container.querySelector('.pr-level[data-state="enter"]')?.getAttribute("data-direction"),
     ).toBe("back");
+    await settle();
   });
 
   it("flags a move inside one rail level so the rails presentation stays still", async () => {
@@ -140,6 +235,7 @@ describe("<Presentation> — direction and presence", () => {
     expect(
       pick(view.container, '.pr-level[data-state="enter"]').getAttribute("data-direction"),
     ).toBe("forward");
+    await settle();
   });
 
   /**
@@ -157,6 +253,7 @@ describe("<Presentation> — direction and presence", () => {
     expect(stack.hasAttribute("data-same-level")).toBe(true);
     // The rail keeps a single entry: nothing exits, nothing enters.
     expect(view.container.querySelectorAll(".pr-rail > .pr-level")).toHaveLength(1);
+    await settle();
   });
 
   it("does flag a real level change", async () => {
@@ -166,6 +263,7 @@ describe("<Presentation> — direction and presence", () => {
     const stack = pick(view.container, ".pr-stack");
     expect(stack.getAttribute("data-level")).toBe("1");
     expect(stack.hasAttribute("data-same-level")).toBe(false);
+    await settle();
   });
 
   it("makes the departing level inert so it cannot take focus or clicks", async () => {
@@ -174,6 +272,7 @@ describe("<Presentation> — direction and presence", () => {
     view.rerender(<Stack path="/settings/appearance">appearance</Stack>);
     const leaving = pick(view.container, '.pr-level[data-state="exit"]');
     expect(leaving.hasAttribute("inert")).toBe(true);
+    await settle();
   });
 });
 
