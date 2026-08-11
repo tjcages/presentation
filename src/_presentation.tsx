@@ -192,7 +192,12 @@ export function Presentation({
   // untouched rather than wrapping it in chrome that does not apply.
   if (!entry) return <>{children}</>;
 
-  const beneath = dragging ? recall(depth - 1) : undefined;
+  // During gesture handoff, depth may already have dropped while the track
+  // still remembers the swiped page. Reveal the page beneath the deeper of
+  // the two so swipe-back never flashes a grandparent.
+  const beneath = dragging
+    ? recall(Math.max(track.depth, depth) - 1)
+    : undefined;
   const push = springEasing(SPRINGS.push);
   // A stack with no content is all rail: the sidebar case.
   const railOnly = children == null;
@@ -561,6 +566,12 @@ function useBackSwipe({
         case "cancel": {
           settleTo(intent, { offset: 0, progress: 0 }, SPRINGS.settle, clear);
           return;
+        }
+        case "idle":
+          return;
+        default: {
+          const _exhaustive: never = intent;
+          void _exhaustive;
         }
       }
     });

@@ -254,3 +254,43 @@ body {
   background: var(--color-background-100);
   font-size: 13px;
 }
+
+/* Package Shell mobile dock — demo-only chrome, geometry owned by Shell. */
+.pr-shell-demo-dock {
+  pointer-events: none;
+  z-index: 30;
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding-inline: 1rem;
+  padding-bottom: max(0.85rem, env(safe-area-inset-bottom, 0px));
+}
+.pr-shell-demo-dock > * {
+  pointer-events: auto;
+}
+.pr-shell-demo-dock-account {
+  margin-left: 16px;
+  max-width: 50%;
+}
+.pr-shell-demo-dock-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+.pr-shell-demo-dock-button {
+  width: 2.75rem;
+  height: 2.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  color: var(--color-foreground-100);
+  background: color-mix(in oklab, var(--color-background-100) 80%, transparent);
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 6%),
+    0 0 0 1px color-mix(in oklab, var(--color-border-100) 50%, transparent);
+  backdrop-filter: blur(12px);
+}

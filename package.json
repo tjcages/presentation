@@ -1,7 +1,7 @@
 {
   "name": "@tjcages/presentation",
-  "version": "0.1.1",
-  "description": "URL-derived push/pop presentation — iOS-style page pushing on mobile, synced rails on desktop. Router-free, zero runtime dependencies.",
+  "version": "0.2.0",
+  "description": "URL-derived push/pop presentation and responsive shell — iOS-style page pushing on mobile, fixed rail and behind-nav on phone, synced rails on desktop. Router-free, zero runtime dependencies.",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -39,7 +39,7 @@
     "demo:deploy": "pnpm demo:build && wrangler deploy"
   },
   "engines": {
-    "node": ">=20.19.0"
+    "node": ">=22.13.0"
   },
   "packageManager": "pnpm@11.20.0",
   "publishConfig": {

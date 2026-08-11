@@ -7,6 +7,7 @@ import { cva } from "class-variance-authority";
 
 import { cn } from "../lib/cn";
 import { useIsMobile } from "../lib/use-is-mobile";
+import { useOptionalShell } from "@tjcages/presentation";
 import {
   Sheet,
   SheetContent,
@@ -241,6 +242,7 @@ export const Sidebar = ({
   collapsible?: "offcanvas" | "icon" | "none";
 }) => {
   const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
+  const shell = useOptionalShell();
 
   if (collapsible === "none") {
     return (
@@ -248,6 +250,29 @@ export const Sidebar = ({
         data-slot="sidebar"
         className={cn(
           "bg-sidebar text-sidebar-foreground w-(--sidebar-width) flex h-full flex-col",
+          className,
+        )}
+        {...props}
+      >
+        {children}
+      </div>
+    );
+  }
+
+  /*
+   * When `@tjcages/presentation` `<Shell>` owns geometry, render rail contents
+   * in place — Shell already provides the fixed desktop rail and mobile behind
+   * panel. A Sheet or second fixed container would fight it.
+   */
+  if (shell) {
+    return (
+      <div
+        data-slot="sidebar"
+        data-sidebar="sidebar"
+        data-mobile={shell.isMobile ? "behind" : "false"}
+        data-state={state}
+        className={cn(
+          "text-sidebar-foreground flex h-full w-full min-h-0 flex-col",
           className,
         )}
         {...props}
@@ -291,10 +316,6 @@ export const Sidebar = ({
       data-side={side}
       data-slot="sidebar"
     >
-      {/* macOS-style full-bleed sidebar: the gap collapses to 0 so the inset
-       *  next to us takes the full viewport width and content scrolls behind
-       *  the sidebar's frosted glass. The inset re-pads itself by the sidebar
-       *  width so visible content stays where it was. */}
       <div data-slot="sidebar-gap" className="w-0" />
       <div
         data-slot="sidebar-container"
@@ -304,15 +325,9 @@ export const Sidebar = ({
           side === "left"
             ? "left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]"
             : "right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]",
-          // Adjust the padding for floating and inset variants.
           variant === "floating" || variant === "inset"
             ? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4))+2px)]"
             : "group-data-[collapsible=icon]:w-(--sidebar-width-icon)",
-          // The frosted glass lives on the FIXED container, not the inner.
-          // The inner shares its parent's compositing layer; Chromium needs
-          // the backdrop-filter to be on the fixed/transformed layer itself
-          // to actually composite the blur — putting it on the static inner
-          // silently no-ops.
           "sidebar-frosted",
           className,
         )}
