@@ -34,27 +34,9 @@
     0 0 0 1px color-mix(in oklab, black 3%, transparent);
 }
 
-@media (prefers-color-scheme: dark) {
-  @theme {
-    --color-background-100: #1c1c1c;
-    --color-background-200: #242424;
-    --color-foreground-100: #f2f2f2;
-    --color-foreground-300: #6e6e6e;
-    --color-border-100: #333333;
-    --color-canvas: #121212;
-
-    --color-sidebar-foreground: #f2f2f2;
-    --color-sidebar-accent: #262626;
-    --color-sidebar-accent-foreground: #f2f2f2;
-    --color-sidebar-ring: #6e6e6e;
-    --color-foreground-200: #b4b4b4;
-
-    /* Rings flip to white alpha so edges read on canvas. */
-    --shadow-general-small:
-      0 4px 8px 0 rgba(0, 0, 0, 0.24), 0 2px 4px 0 rgba(0, 0, 0, 0.16),
-      0 0 0 1px rgba(255, 255, 255, 0.16);
-  }
-}
+/* Demo is light-locked so the Shell rail/menu stay reviewable. Dark tokens
+ * from the product theme made nav text invisible against the light shell. */
+/* @media (prefers-color-scheme: dark) { ... } */
 
 /*
  * TYPOGRAPHY — the ramp from packages/brand/src/typography.css, shifted one

@@ -767,16 +767,20 @@
   overflow-y: hidden;
 }
 
-/* Desktop rail — fixed, out of document flow. Never `relative`. */
+/* Desktop rail — fixed, out of document flow. Never `relative`.
+ * z-index must beat the surface: both are painted in the same stacking
+ * context, the surface comes later in the tree, and an opaque surface
+ * background would otherwise cover the rail completely (invisible nav). */
 .pr-shell-rail--desktop {
   position: fixed;
   inset-block: 0;
   inset-inline-start: 0;
-  z-index: 10;
+  z-index: 30;
   display: flex;
   width: var(--pr-shell-rail-width);
   height: 100svh;
   background: var(--pr-shell-rail-surface);
+  border-inline-end: 1px solid var(--pr-shell-rail-border, rgb(0 0 0 / 8%));
   transition: width 260ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 
@@ -814,7 +818,9 @@
 
 .pr-shell-surface {
   position: relative;
-  z-index: 10;
+  /* Below the desktop rail (30). Mobile open card raises this via
+   * [data-pr-shell-nav] so the page still covers the behind-rail. */
+  z-index: 1;
   display: flex;
   flex: 1;
   flex-direction: column;
@@ -845,6 +851,41 @@
   box-shadow: none;
   transition: translate 0.38s cubic-bezier(0.32, 0.72, 0, 1);
   translate: 0;
+}
+
+/* Visible open control for hosts that do not invent their own chrome. */
+.pr-shell-menu {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 9999px;
+  color: #18181b;
+  background: #ffffff;
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 8%),
+    0 0 0 1px rgb(0 0 0 / 12%);
+  cursor: pointer;
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+.pr-shell[data-mobile="true"] .pr-shell-menu {
+  display: inline-flex;
+}
+
+.pr-shell-menu:active {
+  transform: scale(0.96);
+}
+
+.pr-shell-menu-icon {
+  display: block;
+  width: 1.25rem;
+  height: 1.25rem;
 }
 
 .pr-shell-surface[data-pr-shell-releasing] {

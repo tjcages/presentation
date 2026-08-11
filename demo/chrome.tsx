@@ -30,6 +30,7 @@ import type { NavConfig, NavItem } from "./admin-kit/types";
 import { SETTINGS_NAV } from "./nav-settings";
 import { SectionLevelNav } from "./sidebar-sections";
 import { findSectionLevel, findSettingsSubLevel } from "./sections";
+import { ShellMenuButton } from "@tjcages/presentation";
 
 /**
  * Which destinations open a sidebar level rather than just a page.
@@ -204,6 +205,10 @@ export function AppChrome({
       onSidebarBack={onSidebarBack}
       sidebarBackLabel={sidebarBackLabel}
     >
+      <div className="text-foreground-100 flex items-center gap-2 px-4 pt-3 md:hidden">
+        <ShellMenuButton />
+        <span className="text-sm font-medium">Menu</span>
+      </div>
       <main className="!bg-transparent pt-2 pb-28 md:pt-6 md:pb-12">{children}</main>
     </AppShell>
   );

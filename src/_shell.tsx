@@ -211,6 +211,7 @@ function ShellRailInternal({
     return (
       <aside
         data-slot="pr-shell-rail"
+        id="pr-shell-rail"
         data-mobile="behind"
         data-state={open ? "open" : "closed"}
         className="pr-shell-rail pr-shell-rail--behind"
@@ -226,6 +227,7 @@ function ShellRailInternal({
   return (
     <aside
       data-slot="pr-shell-rail"
+      id="pr-shell-rail"
       data-mobile="false"
       className="pr-shell-rail pr-shell-rail--desktop"
     >
@@ -316,5 +318,58 @@ export function useShellNavigate(
       navigate(path);
     },
     [isMobile, navigate, setOpen],
+  );
+}
+
+export interface ShellMenuButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  /** Accessible label. @default "Open navigation" */
+  label?: string;
+}
+
+/**
+ * Mobile menu control. Hidden on desktop via CSS; opens behind-nav on press.
+ * Totem-style hosts often prefer edge-swipe alone — this exists so demos and
+ * hosts without custom chrome still have a discoverable open affordance.
+ */
+export function ShellMenuButton({
+  label = "Open navigation",
+  className,
+  onClick,
+  ...props
+}: ShellMenuButtonProps) {
+  const { isMobile, open, setOpen } = useShell();
+  return (
+    <button
+      type="button"
+      className={cn("pr-shell-menu", className)}
+      aria-label={label}
+      aria-expanded={isMobile ? open : undefined}
+      aria-controls={isMobile ? "pr-shell-rail" : undefined}
+      onClick={(event) => {
+        onClick?.(event);
+        if (event.defaultPrevented) return;
+        setOpen(true);
+      }}
+      {...props}
+    >
+      <ShellMenuIcon />
+    </button>
+  );
+}
+
+function ShellMenuIcon() {
+  return (
+    <svg
+      className="pr-shell-menu-icon"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      aria-hidden="true"
+    >
+      <path d="M4 7h16M4 12h16M4 17h16" />
+    </svg>
   );
 }

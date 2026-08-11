@@ -43,11 +43,13 @@ export {
 
 export {
   Shell,
+  ShellMenuButton,
   useShell,
   useOptionalShell,
   useShellNavigate,
   type ShellProps,
   type ShellContextValue,
+  type ShellMenuButtonProps,
 } from "./_shell.js";
 
 export {
