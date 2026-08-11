@@ -6,6 +6,11 @@ a desktop, a drawer for a single view — chosen per breakpoint, in CSS.
 Router-free: the host supplies the current path, a way to navigate, and a
 resolver saying where a path sits in the stack. No runtime dependencies.
 
+`<Shell>` owns the responsive frame around those pages: a fixed desktop rail
+that stays out of document flow, and mobile behind-navigation that translates
+the page surface with a sampled spring (static open-state radius and shadow).
+Hosts still own branding, nav data, docks, and router adapters.
+
 ## Install
 
 ```bash
@@ -171,6 +176,34 @@ pnpm demo
 `pnpm check` runs the behavior suite, typecheck, production build, and a dry
 run of the exact npm tarball. The tarball check fails if demo or nested source
 output leaks into the package.
+
+## Shell
+
+```tsx
+import { Shell, Presentation, createResolver } from "@tjcages/presentation";
+
+<Shell
+  path={pathname}
+  rail={<Nav />}
+  mobileDock={<Dock />}   // mounted only on mobile
+  edgeOpen={depth === 0}  // root opens nav; deeper pages keep swipe-back
+>
+  <Presentation path={pathname} navigate={navigate} resolve={resolve}>
+    {children}
+  </Presentation>
+</Shell>
+```
+
+| Prop          |                                                                 |
+| ------------- | --------------------------------------------------------------- |
+| `path`        | Route key — snaps behind-nav closed on change.                  |
+| `rail`        | Navigation content for the fixed desktop / behind mobile rail.  |
+| `mobileDock`  | Optional dock; mounted only when the viewport is mobile.        |
+| `edgeOpen`    | Left-edge open gesture when closed. Default `true`.             |
+| `open`        | Controlled behind-nav open state.                               |
+
+Theme via `--pr-shell-*` custom properties (`--pr-shell-rail-width`,
+`--pr-shell-card-radius`, `--pr-shell-card-shadow`, …).
 
 ## API
 

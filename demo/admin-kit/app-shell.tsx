@@ -1,11 +1,14 @@
 "use client";
 
+import * as React from "react";
+import { Shell, useShell } from "@tjcages/presentation";
+
 import type { AdminKitLink } from "./context";
 import type { NavConfig, NavItem } from "./types";
 import { AppSidebar, type NavStackScreen } from "./app-sidebar";
 import { AdminKitProvider } from "./context";
 import { cn } from "./lib/cn";
-import { SidebarInset, SidebarProvider } from "./primitives/sidebar";
+import { SidebarProvider } from "./primitives/sidebar";
 
 export interface AppShellProps {
   nav: NavConfig;
@@ -53,9 +56,10 @@ export interface AppShellProps {
 }
 
 /**
- * The dashboard frame: sidebar + optional top bar + content.
- * Default pages use the window/document scroller (better mobile touch
- * scrolling). Self-scroll pages lock to the small viewport instead.
+ * Demo app frame driven by `@tjcages/presentation` `<Shell>`.
+ *
+ * Geometry, fixed desktop rail, and mobile behind-nav live in the package.
+ * This file only wires Totem-shaped slots (brand, nav data, dock).
  */
 export function AppShell({
   nav,
@@ -74,57 +78,96 @@ export function AppShell({
   selfScroll = false,
   children,
 }: AppShellProps) {
+  // Root-depth destinations own the edge-open gesture; deeper URL stacks
+  // leave the edge to Presentation swipe-back.
+  const atRootDepth =
+    (sidebarScreens?.length ?? 0) === 0 &&
+    !/^\/settings\/.+/.test(pathname) &&
+    !/^\/crm\/.+/.test(pathname) &&
+    !/^\/pricing\/.+/.test(pathname) &&
+    !/^\/product\/.+/.test(pathname);
+
   return (
     <AdminKitProvider Link={Link} pathname={pathname}>
-      <SidebarProvider
-        resizable={resizable}
+      <Shell
+        path={pathname}
+        edgeOpen={atRootDepth}
         className={selfScroll ? "h-svh max-h-svh overflow-hidden" : undefined}
+        style={
+          {
+            // Align shell tokens with the demo theme.
+            "--pr-shell-surface": "var(--color-canvas, Canvas)",
+            "--pr-shell-rail-surface": "var(--color-canvas, Canvas)",
+          } as React.CSSProperties
+        }
+        rail={
+          <SidebarProvider resizable={resizable} className="contents">
+            <AppSidebar
+              nav={nav}
+              brand={brand}
+              profileSlot={profileSlot}
+              favorites={favorites}
+              recents={recents}
+              sidebarScreens={sidebarScreens}
+              onSidebarBack={onSidebarBack}
+              sidebarBackLabel={sidebarBackLabel}
+            />
+          </SidebarProvider>
+        }
+        mobileDock={<DemoMobileDock nav={nav} Link={Link} profile={profileSlot} />}
       >
-        <AppSidebar
-          nav={nav}
-          brand={brand}
-          profileSlot={profileSlot}
-          favorites={favorites}
-          recents={recents}
-          sidebarScreens={sidebarScreens}
-          onSidebarBack={onSidebarBack}
-          sidebarBackLabel={sidebarBackLabel}
-        />
-        <SidebarInset
+        {topBar}
+        <div
           className={cn(
             "min-w-0",
-            // Document-scroll pages must NOT keep the inset's default
-            // `min-h-0` — that collapses content height on mobile WebKit once
-            // the nested scrollport is gone. Self-scroll keeps `min-h-0` so
-            // the locked `h-svh` shell can resolve inner `h-full` panes.
-            selfScroll ? "min-h-0" : "min-h-auto",
-            // Full-bleed pages: drop the opaque canvas AND the padding
-            // transition. Both promote the inset onto its own compositing
-            // layer, which makes the sidebar's backdrop-filter silently skip
-            // blurring the content behind. Full-bleed pages paint their own
-            // surface anyway.
-            fullBleed && "md:!bg-transparent md:!pl-0 md:!transition-none",
+            fullBleed
+              ? "min-h-0 flex-1 overflow-visible"
+              : selfScroll
+                ? "min-h-0 flex-1 overflow-hidden"
+                : undefined,
+            fullBleed && "md:!pl-0",
           )}
         >
-          {topBar}
-          <div
-            className={cn(
-              "min-w-0",
-              // Default: natural block height so the document grows and
-              // window-scrolls (content passes behind the fixed tab bar).
-              // Self-scroll: flex-1 + min-h-0 + clip so nested panes resolve.
-              // Full-bleed: overflow-visible for frosted sidebar blur.
-              fullBleed
-                ? "min-h-0 flex-1 overflow-visible"
-                : selfScroll
-                  ? "min-h-0 flex-1 overflow-hidden"
-                  : undefined,
-            )}
-          >
-            {children}
-          </div>
-        </SidebarInset>
-      </SidebarProvider>
+          {children}
+        </div>
+      </Shell>
     </AdminKitProvider>
+  );
+}
+
+function DemoMobileDock({
+  nav,
+  Link,
+  profile,
+}: {
+  nav: NavConfig;
+  Link: AdminKitLink;
+  profile?: React.ReactNode;
+}) {
+  const { setOpen } = useShell();
+  const footer = nav.footer ?? [];
+  if (footer.length === 0 && !profile) return null;
+
+  return (
+    <div data-slot="pr-shell-dock" className="pr-shell-demo-dock">
+      <div className="pr-shell-demo-dock-account">{profile}</div>
+      <div className="pr-shell-demo-dock-actions">
+        {footer.map((item) => {
+          const Icon = item.icon;
+          return (
+            <Link
+              key={item.to}
+              to={item.to}
+              end={item.end}
+              aria-label={item.title}
+              className="pr-shell-demo-dock-button"
+              onClick={() => setOpen(false)}
+            >
+              {Icon ? <Icon className="size-5" /> : null}
+            </Link>
+          );
+        })}
+      </div>
+    </div>
   );
 }

@@ -1,16 +1,12 @@
 /**
  * @tjcages/presentation
  *
- * URL-derived push navigation: an iOS-style page push on a phone, synced rails
- * on a desktop, a drawer for a single view — chosen per breakpoint, in CSS.
- *
- * Router-free by design. The host supplies the current path, a way to
- * navigate, and a resolver saying where a path sits in the stack; nothing here
- * imports a router, and nothing here keeps a stack in memory that could fall
- * out of step with the URL.
+ * URL-derived push navigation and a responsive app shell: iOS-style page push
+ * on a phone, synced rails on a desktop, fixed rail / behind-nav geometry —
+ * chosen per breakpoint. Router-free, zero runtime dependencies.
  *
  * ```tsx
- * import { Presentation, createResolver } from "@tjcages/presentation";
+ * import { Presentation, Shell, createResolver } from "@tjcages/presentation";
  * import "@tjcages/presentation/presentation.css";
  *
  * const resolve = createResolver({
@@ -19,15 +15,11 @@
  *   routes: [{ path: "/settings/access", title: "Access" }],
  * });
  *
- * <Presentation
- *   path={pathname}
- *   navigate={router.push}
- *   resolve={resolve}
- *   present={{ base: "push", md: "rails" }}
- *   Link={Link}
- * >
- *   {children}
- * </Presentation>
+ * <Shell path={pathname} rail={<Nav />} mobileDock={<Dock />} edgeOpen={depth === 0}>
+ *   <Presentation path={pathname} navigate={router.push} resolve={resolve}>
+ *     {children}
+ *   </Presentation>
+ * </Shell>
  * ```
  */
 
@@ -48,6 +40,33 @@ export {
   type NavBarProps,
   type PresentationContextValue,
 } from "./_chrome.js";
+
+export {
+  Shell,
+  useShell,
+  useOptionalShell,
+  useShellNavigate,
+  type ShellProps,
+  type ShellContextValue,
+} from "./_shell.js";
+
+export {
+  useIsMobile,
+  usePrefersReducedMotion,
+  SHELL_MOBILE_MAX,
+} from "./_media.js";
+
+export {
+  useMobileNavProgress,
+  writeMobileNavProgress,
+  readMobileNavProgress,
+  measureMobileNavTravel,
+  MOBILE_NAV_EDGE_WIDTH,
+  MOBILE_NAV_COMMIT_RATIO,
+  MOBILE_NAV_OPEN_SCALE,
+  type MobileNavProgress,
+  type MobileNavProgressOptions,
+} from "./_mobile-nav.js";
 
 export {
   createResolver,

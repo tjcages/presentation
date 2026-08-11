@@ -731,3 +731,200 @@
     transition: none;
   }
 }
+
+/* ── Responsive shell ───────────────────────────────────────────────────── */
+
+/*
+ * Fixed desktop rail + mobile behind-navigation. Hosts theme via the
+ * `--pr-shell-*` tokens; nothing here hardcodes a product palette.
+ */
+.pr-shell {
+  --pr-shell-rail-width: 16rem;
+  --pr-shell-rail-width-collapsed: 3.25rem;
+  --pr-shell-nav-width: min(17.5rem, 72vw);
+  --pr-shell-nav-gap: 0.5rem;
+  --pr-shell-nav-progress: 0;
+  --pr-shell-surface: Canvas;
+  --pr-shell-rail-surface: Canvas;
+  --pr-shell-card-radius: 1.5rem;
+  --pr-shell-card-shadow:
+    0 8px 28px rgb(0 0 0 / 22%),
+    0 2px 8px rgb(0 0 0 / 10%);
+  --pr-shell-release-duration: 392ms;
+  --pr-shell-release-ease: ease-out;
+
+  position: relative;
+  display: flex;
+  min-height: 100svh;
+  width: 100%;
+}
+
+.pr-shell[data-mobile="true"] {
+  overflow-x: hidden;
+}
+
+.pr-shell[data-mobile="true"][data-pr-shell-nav="open"] {
+  overflow-y: hidden;
+}
+
+/* Desktop rail — fixed, out of document flow. Never `relative`. */
+.pr-shell-rail--desktop {
+  position: fixed;
+  inset-block: 0;
+  inset-inline-start: 0;
+  z-index: 10;
+  display: flex;
+  width: var(--pr-shell-rail-width);
+  height: 100svh;
+  background: var(--pr-shell-rail-surface);
+  transition: width 260ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.pr-shell[data-pr-shell-expanded="false"] .pr-shell-rail--desktop {
+  width: var(--pr-shell-rail-width-collapsed);
+}
+
+.pr-shell-rail-inner {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+/* Mobile rail — behind the page surface. */
+.pr-shell-rail--behind {
+  position: fixed;
+  inset-block: 0;
+  inset-inline-start: 0;
+  z-index: 0;
+  display: flex;
+  width: var(--pr-shell-nav-width);
+  height: 100svh;
+  overflow: hidden;
+  padding-top: env(safe-area-inset-top, 0px);
+  background: var(--pr-shell-rail-surface);
+  color: inherit;
+  pointer-events: none;
+}
+
+.pr-shell-rail--behind[data-state="open"] {
+  pointer-events: auto;
+}
+
+.pr-shell-surface {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  background: var(--pr-shell-surface);
+}
+
+/* Single sidebar-width pad — the rail itself does not occupy flex space. */
+@media (min-width: 768px) {
+  .pr-shell-surface {
+    padding-inline-start: var(--pr-shell-rail-width);
+    transition: padding-inline-start 260ms cubic-bezier(0.32, 0.72, 0, 1);
+  }
+
+  .pr-shell[data-pr-shell-expanded="false"] .pr-shell-surface {
+    padding-inline-start: var(--pr-shell-rail-width-collapsed);
+  }
+}
+
+.pr-shell-surface[data-pr-shell-nav] {
+  --pr-shell-nav-progress: 0;
+  z-index: 10;
+  min-height: 100svh;
+  transform-origin: 0 center;
+  border-radius: 0;
+  box-shadow: none;
+  transition: translate 0.38s cubic-bezier(0.32, 0.72, 0, 1);
+  translate: 0;
+}
+
+.pr-shell-surface[data-pr-shell-releasing] {
+  transition:
+    transform var(--pr-shell-release-duration, 0.392s)
+      var(--pr-shell-release-ease, ease-out),
+    translate 0.38s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.pr-shell-surface[data-pr-shell-dragging="true"] {
+  transition: none;
+  cursor: grabbing;
+  will-change: transform;
+}
+
+.pr-shell-surface[data-pr-shell-nav="closed"] {
+  --pr-shell-nav-progress: 0;
+  position: relative;
+  top: auto;
+  bottom: auto;
+  min-height: 100svh;
+  overflow: visible;
+  border-radius: 0;
+  box-shadow: none;
+  transform: translate3d(0, 0, 0);
+  overscroll-behavior: none;
+}
+
+/*
+ * Open / dragging card treatment. Radius and shadow are static — they
+ * rasterize once and are not interpolated each frame.
+ */
+.pr-shell-surface[data-pr-shell-nav="open"],
+.pr-shell-surface[data-pr-shell-dragging="true"] {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  max-height: none;
+  margin: 0;
+  overflow: hidden;
+  border-radius: var(--pr-shell-card-radius);
+  background: var(--pr-shell-surface);
+  box-shadow: var(--pr-shell-card-shadow);
+}
+
+.pr-shell-surface[data-pr-shell-nav="open"] {
+  will-change: transform;
+}
+
+.pr-shell-surface-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.pr-shell-dismiss {
+  position: absolute;
+  inset: 0;
+  z-index: 200;
+  border-radius: inherit;
+  touch-action: none;
+  background: transparent;
+  opacity: 1;
+}
+
+[data-slot="pr-shell-edge"] {
+  position: fixed;
+  inset-block: 0;
+  inset-inline-start: 0;
+  z-index: 190;
+  touch-action: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pr-shell-rail--desktop,
+  .pr-shell-surface,
+  .pr-shell-surface[data-pr-shell-nav] {
+    transition-duration: 1ms !important;
+  }
+}

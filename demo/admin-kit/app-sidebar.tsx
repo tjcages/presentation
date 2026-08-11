@@ -8,6 +8,7 @@ import {
   AtRootLevel,
   Presentation,
   PresentationScope,
+  useOptionalShell,
   type StackEntry,
 } from "@tjcages/presentation";
 
@@ -321,6 +322,7 @@ export function AppSidebar({
   recents = [],
 }: AppSidebarProps) {
   const { state, isMobile } = useSidebar();
+  const shell = useOptionalShell();
   const { pathname } = useAdminKit();
   const root = <RootNav nav={nav} favorites={favorites} recents={recents} />;
   // Mount `NavStack` *continuously* while the sidebar is expanded on desktop —
@@ -340,8 +342,11 @@ export function AppSidebar({
    * to `<body>`, which is wrong inside a sidebar. `<Presentation>` in
    * rail-only mode portals nothing, so the level can stay mounted at any
    * width and collapsing is purely a horizontal change.
+   *
+   * When `<Shell>` owns mobile behind-nav, keep the stack on mobile too —
+   * the rail is no longer a Sheet portal.
    */
-  const useStack = !isMobile;
+  const useStack = !isMobile || Boolean(shell);
 
   return (
     // Publishes the pushed-level depth to the footer, which is a sibling of
