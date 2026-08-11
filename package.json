@@ -1,6 +1,6 @@
 {
   "name": "@tjcages/presentation",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "URL-derived push/pop presentation and responsive shell — iOS-style page pushing on mobile, fixed rail and behind-nav on phone, synced rails on desktop. Router-free, zero runtime dependencies.",
   "type": "module",
   "main": "./dist/index.js",

@@ -95,9 +95,11 @@ export function AppShell({
         className={selfScroll ? "h-svh max-h-svh overflow-hidden" : undefined}
         style={
           {
-            // Align shell tokens with the demo theme.
-            "--pr-shell-surface": "var(--color-canvas, Canvas)",
-            "--pr-shell-rail-surface": "var(--color-canvas, Canvas)",
+            // Demo: light, high-contrast shell so the rail is unmistakable.
+            "--pr-shell-surface": "#ffffff",
+            "--pr-shell-rail-surface": "#f4f4f5",
+            "--pr-shell-rail-border": "#e4e4e7",
+            colorScheme: "light",
           } as React.CSSProperties
         }
         rail={

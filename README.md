@@ -202,6 +202,9 @@ import { Shell, Presentation, createResolver } from "@tjcages/presentation";
 | `edgeOpen`    | Left-edge open gesture when closed. Default `true`.             |
 | `open`        | Controlled behind-nav open state.                               |
 
+`ShellMenuButton` is the discoverable mobile open control (hidden on desktop).
+Edge-swipe still works; hosts that already have chrome can omit the button.
+
 Theme via `--pr-shell-*` custom properties (`--pr-shell-rail-width`,
 `--pr-shell-card-radius`, `--pr-shell-card-shadow`, …).
 

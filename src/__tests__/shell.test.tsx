@@ -8,7 +8,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { Presentation } from "../_presentation";
 import { createResolver } from "../_resolve";
-import { Shell, useShell } from "../_shell";
+import { Shell, ShellMenuButton, useShell } from "../_shell";
 import {
   MOBILE_NAV_OPEN_SCALE,
   writeMobileNavProgress,
@@ -79,10 +79,29 @@ describe("<Shell> desktop", () => {
     ) as HTMLElement;
     expect(rail.className).toContain("pr-shell-rail--desktop");
     expect(rail.className).not.toContain("relative");
-    const styles = getComputedStyle(rail);
-    // jsdom does not apply stylesheets; assert the class contract instead.
+    // Class contract: desktop rail stacks above the surface so an opaque
+    // page background cannot paint over the nav.
     expect(rail.className.split(/\s+/)).toContain("pr-shell-rail--desktop");
-    void styles;
+  });
+
+  it("exposes a menu button that is for mobile hosts to mount", async () => {
+    function Page() {
+      return (
+        <div>
+          <ShellMenuButton />
+          <main>page</main>
+        </div>
+      );
+    }
+    render(
+      <Shell rail={<div>nav</div>}>
+        <Page />
+      </Shell>,
+    );
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(screen.getByRole("button", { name: "Open navigation" })).toBeTruthy();
   });
 
   it("does not mount the mobile dock on desktop", async () => {
@@ -235,6 +254,31 @@ describe("<Shell> mobile", () => {
     expect(container.querySelector('[data-slot="pr-shell-edge"]')).toBeNull();
   });
 
+  it("opens behind-nav from ShellMenuButton", async () => {
+    function Page() {
+      const { open } = useShell();
+      return (
+        <div>
+          <ShellMenuButton />
+          <span data-testid="open-state">{open ? "open" : "closed"}</span>
+        </div>
+      );
+    }
+    render(
+      <Shell rail={<div>nav</div>}>
+        <Page />
+      </Shell>,
+    );
+    await act(async () => {
+      await Promise.resolve();
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Open navigation" }));
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(screen.getByTestId("open-state").textContent).toBe("open");
+  });
+
   it("closes behind-nav when a destination in the rail is chosen", async () => {
     function Harness() {
       const [open, setOpen] = React.useState(true);
@@ -256,7 +300,6 @@ describe("<Shell> mobile", () => {
     await act(async () => {
       await Promise.resolve();
     });
-    // After click, open is false — shell reports closed.
     expect(screen.getByTestId("rail")).toBeTruthy();
   });
 });
