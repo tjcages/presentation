@@ -39,6 +39,29 @@
 /* @media (prefers-color-scheme: dark) { ... } */
 
 /*
+ * Sidebar group collapse. `CollapsibleContent` animates these names; without
+ * the keyframes Radix keeps the panel mounted at full height after close
+ * (aria-expanded flips, Policies stays visible).
+ */
+@keyframes collapsible-open {
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--radix-collapsible-content-height);
+  }
+}
+
+@keyframes collapsible-close {
+  from {
+    height: var(--radix-collapsible-content-height);
+  }
+  to {
+    height: 0;
+  }
+}
+
+/*
  * TYPOGRAPHY — the ramp from packages/brand/src/typography.css, shifted one
  * step down for dashboard density: pages lead with h2, h1 is for heroes.
  *
