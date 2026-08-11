@@ -39,7 +39,7 @@
     "demo:deploy": "pnpm demo:build && wrangler deploy"
   },
   "engines": {
-    "node": ">=20.19.0"
+    "node": ">=22.13.0"
   },
   "packageManager": "pnpm@11.20.0",
   "publishConfig": {
