@@ -4,7 +4,7 @@
 
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import * as React from "react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { Presentation } from "../_presentation";
 import { createResolver } from "../_resolve";
